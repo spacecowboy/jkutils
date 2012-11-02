@@ -73,7 +73,7 @@ def parse_data(inputs, targetcols = None, inputcols = None, ignorecols = [], ign
         raise TypeError('Slicing of inputs failed, it is probably not a numpy array: ' + str(inputs))
 
     if not inputcols:
-        inputcols = range(len(inputs[0]))
+        inputcols = list(range(len(inputs[0])))
         destroycols = []
         try:
             destroycols.append(int(targetcols)) #Only if it's an int
@@ -88,7 +88,7 @@ def parse_data(inputs, targetcols = None, inputcols = None, ignorecols = [], ign
 
     if fill_average:
         replace_empty_with_avg(inputs, inputcols)
-    for line in xrange(len(inputs)):
+    for line in range(len(inputs)):
         if len(targetcols) == 0:
             all_cols = inputs[line, inputcols]
         elif len(inputcols) == 0:
@@ -129,7 +129,7 @@ def replace_empty_with_avg(inputs, inputcols):
             except ValueError:
                 pass
         avg_val = valid_inputs.mean()
-        for i in xrange(len(inputs)):
+        for i in range(len(inputs)):
             try:
                 float(inputs[i, col])
             except ValueError:
@@ -148,7 +148,7 @@ def replace_empty_with_random(inputs, inputcols):
                 valid_inputs = np.append(valid_inputs, float(val))
             except ValueError:
                 pass
-        for i in xrange(len(inputs)):
+        for i in range(len(inputs)):
             try:
                 float(inputs[i, col])
             except ValueError:
@@ -160,7 +160,7 @@ def normalizeArray(array):
     inputs = np.copy(array)
     #First we must determine which columns have real values in them
     #Basically, if it isn't a binary value by comparing to 0 and 1
-    for col in xrange(len(inputs[0])):
+    for col in range(len(inputs[0])):
         real = False
         for value in inputs[:, col]:
             if value != 0 and value != 1:
@@ -184,7 +184,7 @@ def normalizeArrayLike(test_array, norm_array):
     test_inputs = np.copy(test_array)
     #First we must determine which columns have real values in them
     #Basically, if it isn't a binary value by comparing to 0 and 1
-    for col in xrange(norm_array.shape[1]):
+    for col in range(norm_array.shape[1]):
         real = False
         for value in norm_array[:, col]:
             if value != 0 and value != 1:
@@ -243,14 +243,14 @@ def get_validation_set(inputs, targets, validation_size = 0.2, binary_column = N
         zeros = targets[:, binary_column] == 0
         ones = targets[:, binary_column] == 1
     else:
-        zeros = [True for x in xrange(len(targets))]
+        zeros = [True for x in range(len(targets))]
         ones = []
 
     #First zeros
     if len(zeros) > 0:
         inputs_zero = inputs[zeros]
         targets_zero = targets[zeros]
-        for row in xrange(len(inputs_zero)):
+        for row in range(len(inputs_zero)):
             if random() > validation_size:
                 test_inputs.append(inputs_zero[row])
                 test_targets.append(targets_zero[row])
@@ -261,7 +261,7 @@ def get_validation_set(inputs, targets, validation_size = 0.2, binary_column = N
     if len(ones) > 0:
         inputs_ones = inputs[ones]
         targets_ones = targets[ones]
-        for row in xrange(len(inputs_ones)):
+        for row in range(len(inputs_ones)):
             if random() > validation_size:
                 test_inputs.append(inputs_ones[row])
                 test_targets.append(targets_ones[row])
@@ -292,8 +292,8 @@ def get_cross_validation_sets(inputs, targets, pieces, binary_column = None, ret
     training_sets = []
     validation_sets = []
 
-    training_indices_sets = [[] for piece in xrange(pieces)]
-    validation_indices_sets = [[] for piece in xrange(pieces)]
+    training_indices_sets = [[] for piece in range(pieces)]
+    validation_indices_sets = [[] for piece in range(pieces)]
 
     training_input_sets = []
     training_target_sets = []
@@ -322,13 +322,13 @@ def get_cross_validation_sets(inputs, targets, pieces, binary_column = None, ret
     def divide_sets(indices):
         sets = np.array_split(indices, pieces)
         k = 0
-        for set in xrange(len(sets)):
+        for set in range(len(sets)):
             validation_indices_sets[set].extend(sets[k])
             #validation_input_sets[set].extend(inputs[sets[k]])
             #validation_target_sets[set].extend(targets[sets[k]])
             k += 1
             k %= pieces
-            for piece in xrange(pieces - 1):
+            for piece in range(pieces - 1):
                 training_indices_sets[set].extend(sets[k])
                 #training_input_sets[set].extend(inputs[sets[k]])
                 #raining_target_sets[set].extend(targets[sets[k]])
@@ -347,7 +347,7 @@ def get_cross_validation_sets(inputs, targets, pieces, binary_column = None, ret
         divide_sets(ones)
 
     #convert types
-    for set in xrange(len(training_indices_sets)):
+    for set in range(len(training_indices_sets)):
         trows = training_indices_sets[set]
         training_sets.append(np.zeros((len(trows), totalcols), dtype = 'float64'))
 
@@ -371,8 +371,8 @@ def get_cross_validation_sets(inputs, targets, pieces, binary_column = None, ret
         validation_target_sets.append(validation_sets[set][:, len(inputs[0, :]):totalcols])
 
     # Return a list of tuple, (Training, Validation)
-    training = zip(training_input_sets, training_target_sets)
-    validation = zip(validation_input_sets, validation_target_sets)
+    training = list(zip(training_input_sets, training_target_sets))
+    validation = list(zip(validation_input_sets, validation_target_sets))
 
     if pieces == 1:
         #There will be nothing in training, and everything in validaiton. Swap them before return.
@@ -380,10 +380,10 @@ def get_cross_validation_sets(inputs, targets, pieces, binary_column = None, ret
         training_indices_sets, validation_indices_sets = validation_indices_sets, training_indices_sets
 
     if not return_indices:
-        return zip(training, validation)
+        return list(zip(training, validation))
     else:
         # Return indices if they are of interest
-        indices = zip(training_indices_sets, validation_indices_sets)
-        data_sets = zip(training, validation)
+        indices = list(zip(training_indices_sets, validation_indices_sets))
+        data_sets = list(zip(training, validation))
         return (data_sets, indices)
 

@@ -15,7 +15,9 @@ def get_C_index(T, outputs):
     plus 1. Finally divide by the number of comparisons made.
     Non-censored points can be compared with all other non-censored points
     and all later censored points.
-    Censored points can only be compared to earlier non-censored points."""
+    Censored points can only be compared to earlier non-censored points.
+    """
+
     total = 0
     sum = 0
     for x in range(len(T)):
@@ -33,8 +35,9 @@ def get_C_index(T, outputs):
             elif T[x, 1] == 1 and (T[y, 1] == 0) and T[x, 0] < T[y, 0]:
                 #Non-censored compared with later censored
                 total += 1
-                if outputs[x, 0] <= outputs[y, 0]:
+                if outputs[x, 0] < outputs[y, 0]:
                     sum += 1
 
-    sum /= float(total)
-    return sum
+    print(("Sum: {}".format(sum)))
+    print(("Total: {}".format(total)))
+    return float(sum) / float(total)
