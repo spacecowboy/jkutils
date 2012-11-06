@@ -2,45 +2,58 @@ import numpy as np
 import re
 from os import path
 from random import random, sample
+import csv
 
 def parse_header(headers):
+    """
+    In Python3, this method could be done in one line:
+    return {name:i for i, name in enumerate(headers)}
+    """
     header_names = {}
-    idx = 0
-    for name in headers:
+    for idx, name in enumerate(headers):
         header_names[name] = idx
-        idx += 1
+
     return header_names
 
-def read_data_file(filename, separator = None):
-    """Columns are data dimensions, rows are sample data. Whitespace separates the columns. Returns a python list [[]]."""
+def read_data_file(filename, separator = ','):
+    """Columns are data dimensions, rows are sample data.
+    Whitespace separates the columns. Returns a python list [[]].
+    """
+
     with open(filename, 'r') as f:
-        if not separator:
-            inputs = [line.split() for line in f]
-        else:
-            #Strip chomps away newlines which will mess things up otherwise
-            inputs = []
-            for line in f:
-                inputs.append([col.strip() for col in line.split(separator)])
+        reader = csv.reader(f.readlines(), delimiter=separator)
+        inputs = [row for row in reader]
+
     #Make sure it has a consistent structure
     col_len = len(inputs[0])
-    for linenum, line in enumerate(inputs):
+    for line in inputs:
         assert(len(line) == col_len)
     return inputs
 
-def parse_file(filename, targetcols = None, inputcols = None, ignorecols = [], ignorerows = [], normalize = True, separator = None, use_header = False, fill_average = True):
-    return parse_data(np.array(read_data_file(filename, separator = separator)), targetcols, inputcols, ignorecols, ignorerows, normalize, use_header, fill_average)
+def parse_file(filename, inputcols = None, ignorecols = [], ignorerows = [],
+               normalize = True, separator = None, use_header = False,
+               fill_average = True):
+    return parse_data(np.array(read_data_file(filename, separator = separator)),
+                      inputcols, ignorecols, ignorerows, normalize, use_header,
+                      fill_average)
 
-def parse_data(inputs, targetcols = None, inputcols = None, ignorecols = [], ignorerows = [], normalize = True, use_header = False, fill_average = True):
-    """inputs is an array of data columns. targetcols is either an int describing which column is a the targets or it's a list of several ints pointing to multiple target columns.
-    Input columns follows the same pattern, but are not necessary if the inputs are all that's left when target columns are subtracted.
-    Ignorecols can be used instead if it's easier to specify which columns to ignore instead of which are inputs.
+def parse_data(inputs, inputcols = None, ignorecols = [], ignorerows = [],
+               normalize = True, use_header = False, fill_average = True):
+    """inputs is an array of data columns. targetcols is either an int
+    describing which column is a the targets or it's a list of several ints
+    pointing to multiple target columns.
+    Input columns follows the same pattern, but are not necessary if the inputs
+    are all that's left when target columns are subtracted.
+    Ignorecols can be used instead if it's easier to specify which columns to
+    ignore instead of which are inputs.
     Ignorerows specify which, if any, rows should be skipped.
 
-    if useHeader is True, the first line is taken to be the header containing column names. This will be parsed and inputcols and targetcols must now specify the columns with names instead.
-    The first line (the header) is subsequently ignored from the dataset so this doesn't have to be specified seperately."""
-
-    if targetcols is None:
-        targetcols = []
+    if useHeader is True, the first line is taken to be the header containing
+    column names. This will be parsed and inputcols and targetcols must now
+    specify the columns with names instead.
+    The first line (the header) is subsequently ignored from the dataset so this
+    doesn't have to be specified seperately.
+    """
 
     if use_header:
         #Parse the header line, get a hash where the keys are the names and the values are the column numbers.
@@ -49,28 +62,20 @@ def parse_data(inputs, targetcols = None, inputcols = None, ignorecols = [], ign
         if 0 not in ignorerows:
             ignorerows.append(0)
         #Also verify that the names specified are indeed valid column names, otherwise throw an exception about it.
-        for cols in (targetcols, inputcols):
-            for name in cols:
-                if name not in col_names:
-                    raise ValueError(str(name) + ' is not a column name ({})'.format(col_names))
+        for name in inputcols:
+            if name not in col_names:
+                raise ValueError(str(name) + ' is not a column name ({})'.format(col_names))
 
         #Now use a translated array from names to numbers. Carry on as before
-        named_targetcols, named_inputcols = targetcols, inputcols
-        targetcols = [col_names[name] for name in named_targetcols]
+        named_inputcols = inputcols
         inputcols = [col_names[name] for name in named_inputcols]
-
-    try:
-        targetcols = [int(targetcols)]
-    except TypeError:
-        #targetcols is already a list
-        pass
 
     try:
         inputs[:, 0]
     except (TypeError, IndexError):
         #Slicing failed, inputs is not a numpy array. Alert user
-
-        raise TypeError('Slicing of inputs failed, it is probably not a numpy array: ' + str(inputs))
+        raise TypeError('Slicing of inputs failed, \
+it is probably not a numpy array: ' + str(inputs))
 
     if not inputcols:
         inputcols = list(range(len(inputs[0])))
@@ -88,18 +93,12 @@ def parse_data(inputs, targetcols = None, inputcols = None, ignorecols = [], ign
 
     if fill_average:
         replace_empty_with_avg(inputs, inputcols)
+
     for line in range(len(inputs)):
-        if len(targetcols) == 0:
-            all_cols = inputs[line, inputcols]
-        elif len(inputcols) == 0:
-            all_cols = inputs[line, targetcols]
-        else:
-            all_cols = inputs[line, np.append(inputcols, targetcols)]
-        keep_only_numbers(line, all_cols, ignorerows)
+        keep_only_numbers(line, inputcols, ignorerows)
 
     inputs = np.delete(inputs, ignorerows, 0)
 
-    targets = np.array(inputs[:, targetcols], dtype = 'float64')
     inputs = np.array(inputs[:, inputcols], dtype = 'float64')
 
     if normalize:
@@ -107,7 +106,7 @@ def parse_data(inputs, targetcols = None, inputcols = None, ignorecols = [], ign
 
     #Now divide the input into test and validation parts
 
-    return inputs, targets
+    return inputs
 
 def keep_only_numbers(line, all_cols, ignorerows):
     for col in all_cols: #check only valid columns
@@ -152,11 +151,14 @@ def replace_empty_with_random(inputs, inputcols):
             try:
                 float(inputs[i, col])
             except ValueError:
-                inputs[i, col] = sample(valid_inputs, 1)[0] #Sample returns a list, access first and only element
+                #Sample returns a list, access first and only element
+                inputs[i, col] = sample(valid_inputs, 1)[0]
 
 def normalizeArray(array):
     '''Returns a new array, will not modify existing array.
-    Normalization is simply subtracting the mean and dividing by the standard deviation (for non-binary arrays).'''
+    Normalization is simply subtracting the mean and dividing by the
+    standard deviation (for non-binary arrays).'''
+
     inputs = np.copy(array)
     #First we must determine which columns have real values in them
     #Basically, if it isn't a binary value by comparing to 0 and 1
@@ -173,11 +175,15 @@ def normalizeArray(array):
     return inputs
 
 def normalizeArrayLike(test_array, norm_array):
-    ''' Takes two arrays, the first is the test set you wish to have normalized as the second array is normalized.
-    Normalization is simply subtracting the mean and dividing by the standard deviation (for non-binary arrays).
+    ''' Takes two arrays, the first is the test set you wish to have
+    normalized as the second array is normalized.
+    Normalization is simply subtracting the mean and dividing by the
+    standard deviation (for non-binary arrays).
 
-    So what this method does is for every column in array1, subtract by the mean of array2 and divide by the STD of
-    array2. Mean that both arrays have been subjected to the same transformation.'''
+    So what this method does is for every column in array1, subtract
+    by the mean of array2 and divide by the STD of
+    array2. Mean that both arrays have been subjected
+    to the same transformation.'''
     if test_array.shape[1] != norm_array.shape[1] or len(test_array.shape) != 2 or len(norm_array.shape) != 2:
         #Number of columns did not match
         raise ValueError('Number of columns did not match in the two arrays.')
@@ -199,10 +205,12 @@ def normalizeArrayLike(test_array, norm_array):
 
 def print_output(outfile, net, filename, targetcols, inputcols, ignorerows, normalize):
     '''
-    Take a network and a file, outputting the inputs to that network and its output for said input on each line.
+    Take a network and a file, outputting the inputs to that network and
+    its output for said input on each line.
     '''
     inputs = read_data_file(filename)
-    P, T = parse_file(filename, targetcols = targetcols, inputcols = inputcols, ignorerows = ignorerows, normalize = normalize)
+    P, T = parse_file(filename, targetcols = targetcols, inputcols = inputcols,
+                      ignorerows = ignorerows, normalize = normalize)
     outputs = net.sim(P).tolist()
     while len(inputs) > len(outputs):
         outputs.insert(0, ["net_output"])
@@ -224,9 +232,11 @@ def print_output(outfile, net, filename, targetcols, inputcols, ignorerows, norm
     with open(outfile, 'w') as f:
         f.writelines(lines)
 
-def get_validation_set(inputs, targets, validation_size = 0.2, binary_column = None):
+def get_validation_set(inputs, targets, validation_size = 0.2,
+                       binary_column = None):
     '''
-    Use binary column to specify a column of the targets which is binary, and can be used for
+    Use binary column to specify a column of the targets which is binary,
+    and can be used for
     stratified division of the dataset.
     '''
 
