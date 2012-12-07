@@ -4,6 +4,8 @@ Some utility functions for survival contexts, like calculating the C-index
 
 def get_C_index(T, outputs):
     """
+    Better to use the much faster C++-version in ann-package.
+
     Calculate the C-index of outputs compared to the target data T.
     T should be 2-dimensional, first column is the survival time and second
     column is the event variable. Y is also expected to be 2-dimensional, but

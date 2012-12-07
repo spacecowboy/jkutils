@@ -1,2 +1,4 @@
-build
+build/
 *.bak
+__pycache__
+
