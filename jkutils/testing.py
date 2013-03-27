@@ -102,8 +102,6 @@ def crossvalidate_mse(net_constructor, data, inputcols, targetcols, ntimes=5,
         # Re-shuffle the data every time
         for c in classes:
             np.random.shuffle(classindices[c])
-        #np.random.shuffle(censored)
-        #np.random.shuffle(uncensored)
 
         for k in range(kfold):
             valindices = []
@@ -126,7 +124,7 @@ def crossvalidate_mse(net_constructor, data, inputcols, targetcols, ntimes=5,
             # Ready to train
             net = net_constructor()
             net.learn(data[trnindices][:, inputcols],
-                      data[trnindices][:, targetcols])
+                      data[trnindices][:, (targetcols,)])
 
             # Training result
             predictions = np.array([net.output(x) for x in data[trnindices][:, inputcols]]).ravel()
