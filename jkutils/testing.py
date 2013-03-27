@@ -60,6 +60,87 @@ def test_parameter_values(net_constructor, data, inputcols, targetcols,
 
     return results
 
+
+def crossvalidate_mse(net_constructor, data, inputcols, targetcols, ntimes=5,
+                      kfold=3):
+    '''
+    Does crossvalidation testing on a network the designated
+    number of times. Expects a single target column. Stratifies for classes.
+
+    Keyword arguments:
+    net_constructor - A function that should return a new neural network with
+    all properties set to suitable values.
+
+    data - The data to do crossvalidation on. Should be a two-dimensional
+    numpy array (or compatible).
+
+    inputcols - A tuple/list of the column numbers which represent the input
+    data.
+
+    targetcols - Column number which is the target column.
+
+    ntimes - The number of times to divide the data.
+
+    kfold - The number of folds to divide the data in. Total number of results
+    will equal ntimes * kfold. Where each row has featured in a test set ntimes.
+
+    Returns a tuple: (trnresultlist, valresultlist)
+    where each list is ntimes * kfold long.
+    '''
+    trnresults = []
+    valresults = []
+
+    # This might be a decimal number, remember to round it off
+    indices = np.arange(len(data))
+
+    classes = np.unique(data[:, targetcols])
+    classindices = {}
+    for c in classes:
+        classindices[c] = indices[data[:, targetcols] == c]
+
+    for n in range(ntimes):
+        # Re-shuffle the data every time
+        for c in classes:
+            np.random.shuffle(classindices[c])
+        #np.random.shuffle(censored)
+        #np.random.shuffle(uncensored)
+
+        for k in range(kfold):
+            valindices = []
+            trnindices = []
+
+            # Join the data pieces
+            for p in range(kfold):
+                # validation piece
+                if k == p:
+                    for idx in classindices.values():
+                        # Calc piece length
+                        plength = int(round(len(idx) / kfold))
+                        valindices.extend(idx[p*plength:(p+1)*plength])
+                else:
+                    for idx in classindices.values():
+                        # Calc piece length
+                        plength = int(round(len(idx) / kfold))
+                        trnindices.extend(idx[p*plength:(p+1)*plength])
+
+            # Ready to train
+            net = net_constructor()
+            net.learn(data[trnindices][:, inputcols],
+                      data[trnindices][:, targetcols])
+
+            # Training result
+            predictions = np.array([net.output(x) for x in data[trnindices][:, inputcols]]).ravel()
+            mse = np.sum((data[trnindices][:, targetcols] - predictions)**2) / len(data)
+            trnresults.append(mse)
+
+            # Validation result
+            predictions = np.array([net.output(x) for x in data[valindices][:, inputcols]]).ravel()
+            mse = np.sum((data[valindices][:, targetcols] - predictions)**2) / len(data)
+
+            valresults.append(mse)
+
+    return (trnresults, valresults)
+
 def crossvalidate(net_constructor, data, inputcols, targetcols, ntimes=5,
                   kfold=3):
     '''
@@ -92,7 +173,7 @@ def crossvalidate(net_constructor, data, inputcols, targetcols, ntimes=5,
     valresults = []
 
     # This might be a decimal number, remember to round it off
-    indices = np.array(range(len(data)))
+    indices = np.arange(len(data))
 
     censored = indices[data[:, targetcols[1]] == 0]
     uncensored = indices[data[:, targetcols[1]] == 1]
