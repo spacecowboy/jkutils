@@ -62,10 +62,11 @@ def test_parameter_values(net_constructor, data, inputcols, targetcols,
 
 
 def crossvalidate_mse(net_constructor, data, inputcols, targetcols, ntimes=5,
-                      kfold=3):
+                      kfold=3, stratifycol=None):
     '''
     Does crossvalidation testing on a network the designated
-    number of times. Expects a single target column. Stratifies for classes.
+    number of times. Expects a single target column. Stratifies for classes
+    if specified.
 
     Keyword arguments:
     net_constructor - A function that should return a new neural network with
@@ -84,19 +85,24 @@ def crossvalidate_mse(net_constructor, data, inputcols, targetcols, ntimes=5,
     kfold - The number of folds to divide the data in. Total number of results
     will equal ntimes * kfold. Where each row has featured in a test set ntimes.
 
+    startifycol - Optional. The column stratify for. Default None.
+
     Returns a tuple: (trnresultlist, valresultlist)
     where each list is ntimes * kfold long.
     '''
     trnresults = []
     valresults = []
 
-    # This might be a decimal number, remember to round it off
     indices = np.arange(len(data))
 
-    classes = np.unique(data[:, targetcols])
     classindices = {}
-    for c in classes:
-        classindices[c] = indices[data[:, targetcols] == c]
+    if stratifycol is not None:
+        classes = np.unique(data[:, stratifycol])
+        for c in classes:
+            classindices[c] = indices[data[:, stratifycol] == c]
+    else:
+        classes = ['Dummy']
+        classindices[classes[0]] = indices
 
     for n in range(ntimes):
         # Re-shuffle the data every time
@@ -173,42 +179,35 @@ def crossvalidate(net_constructor, data, inputcols, targetcols, ntimes=5,
     # This might be a decimal number, remember to round it off
     indices = np.arange(len(data))
 
-    censored = indices[data[:, targetcols[1]] == 0]
-    uncensored = indices[data[:, targetcols[1]] == 1]
-
-    kfraccens = len(censored) / kfold
-    kfracuncens = len(uncensored) / kfold
+    classes = np.unique(data[:, targetcols[1]])
+    classindices = {}
+    for c in classes:
+        classindices[c] = indices[data[:, targetcols[1]] == c]
 
     for n in range(ntimes):
         # Re-shuffle the data every time
-        np.random.shuffle(censored)
-        np.random.shuffle(uncensored)
+        for c in classes:
+            np.random.shuffle(classindices[c])
 
-        # Divide all k parts among the indices.
-        censsets = [censored[int(round(a*kfraccens)): int(round(b*kfraccens))] for a,b in zip(range(kfold), range(1, kfold+1))]
-        uncenssets = [uncensored[int(round(a*kfracuncens)): int(round(b*kfracuncens))] for a,b in zip(range(kfold), range(1, kfold+1))]
-        # Each time, either piece 0,1,...k will be the validation part
-        for k in range(len(censsets)):
-            trnparts = list(range(len(censsets)))
-            # Remove validation set
-            trnparts.remove(k)
-            # Combine into actual sets
-            trncens = []
-            trnuncens = []
-            for part in trnparts:
-                trncens.extend(censsets[part])
-                trnuncens.extend(uncenssets[part])
+        for k in range(kfold):
+            valindices = []
+            trnindices = []
 
-            valcens = list(censsets[k])
-            valuncens = list(uncenssets[k])
+            # Join the data pieces
+            for p in range(kfold):
+                # validation piece
+                if k == p:
+                    for idx in classindices.values():
+                        # Calc piece length
+                        plength = int(round(len(idx) / kfold))
+                        valindices.extend(idx[p*plength:(p+1)*plength])
+                else:
+                    for idx in classindices.values():
+                        # Calc piece length
+                        plength = int(round(len(idx) / kfold))
+                        trnindices.extend(idx[p*plength:(p+1)*plength])
 
-            trnindices = trncens + trnuncens
-            np.random.shuffle(trnindices)
-
-            valindices = valcens + valuncens
-
-            # Train the network with previously set parameters on
-            # training set
+            # Ready to train
             net = net_constructor()
             net.learn(data[trnindices][:, inputcols],
                       data[trnindices][:, targetcols])
@@ -216,13 +215,11 @@ def crossvalidate(net_constructor, data, inputcols, targetcols, ntimes=5,
             # Training result
             predictions = np.array([net.output(x) for x in data[trnindices][:, inputcols]]).ravel()
             c_index = get_C_index(data[trnindices][:, targetcols], predictions)
-
             trnresults.append(c_index)
 
             # Validation result
             predictions = np.array([net.output(x) for x in data[valindices][:, inputcols]]).ravel()
             c_index = get_C_index(data[valindices][:, targetcols], predictions)
-
             valresults.append(c_index)
 
     return (trnresults, valresults)
