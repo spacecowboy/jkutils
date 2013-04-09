@@ -348,6 +348,8 @@ def compare_parameter(net_constructor, data, inputcols, targetcols,
     "get_savefig()".
 
     ntimes - The number of times to train the network.
+
+    Returns a tuple (variable, result)
     '''
     testresults = test_parameter_values(net_constructor, data, inputcols,
                                     targetcols, name, values, ntimes)
@@ -358,6 +360,7 @@ def compare_parameter(net_constructor, data, inputcols, targetcols,
 
     plot_comparison(labels, sortedresults, savefig, name, xlabel = name)
 
+    return (sorted(testresults.keys()), sortedresults)
 
 
 def get_savefig(savedir, prefix='', filename=None):
