@@ -163,7 +163,7 @@ def crossvalidate(net_constructor, data, inputcols, targetcols, ntimes=5,
 
     targetcols - A tuple/list expected to have two members. First being the
     column number of the survival times. The second being the column number
-    of the event column.
+    of the event column. The data sets are stratified for the event column.
 
     ntimes - The number of times to divide the data.
 
