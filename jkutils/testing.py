@@ -322,7 +322,7 @@ def crossvalidate_parameter(net_constructor, data, inputcols, targetcols,
 
 
 def compare_parameter(net_constructor, data, inputcols, targetcols,
-                      name, values, savefig=None, ntimes=10):
+                      name, values, savefig=None, ntimes=10, plot=True):
     '''
     Keyword arguments:
     net_constructor - A function that should return a new neural network with
@@ -349,6 +349,8 @@ def compare_parameter(net_constructor, data, inputcols, targetcols,
 
     ntimes - The number of times to train the network.
 
+    plot[true] - Set to false if no plotting desired
+
     Returns a tuple (variable, result)
     '''
     testresults = test_parameter_values(net_constructor, data, inputcols,
@@ -358,7 +360,8 @@ def compare_parameter(net_constructor, data, inputcols, targetcols,
 
     sortedresults = [testresults[k] for k in sorted(testresults.keys())]
 
-    plot_comparison(labels, sortedresults, savefig, name, xlabel = name)
+    if plot:
+        plot_comparison(labels, sortedresults, savefig, name, xlabel = name)
 
     return (sorted(testresults.keys()), sortedresults)
 
