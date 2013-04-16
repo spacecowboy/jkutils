@@ -374,6 +374,8 @@ def get_savefig(savedir, prefix='', filename=None):
     designated directory and prefixed with the specified
     prefix as "prefix_filename.extension"
 
+    DPI defaults to 300 to get high resolution png files.
+
     Keyword arguments:
     savedir - Folder in which to save figures
 
@@ -400,6 +402,10 @@ def get_savefig(savedir, prefix='', filename=None):
         # Make sure we use bbox_inches
         if 'bbox_inches' not in kwargs:
             kwargs['bbox_inches'] = 'tight'
+
+        # Make the images high resolution if not otherwise specified
+        if 'dpi' not in kwargs:
+            kwargs['dpi'] = 300
 
         # Default filename
         fname = filename
