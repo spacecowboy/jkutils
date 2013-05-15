@@ -421,9 +421,10 @@ def get_savefig(savedir, prefix='', filename=None):
         if fname is None:
             raise ValueError("A filename must be specified!")
 
+        # Save png first as eps crashes on big images
+        plt.savefig(*([fname + '.png'] + args), **kwargs)
+
         # Save eps
         plt.savefig(*([fname + '.eps'] + args), **kwargs)
-        # Save png
-        plt.savefig(*([fname + '.png'] + args), **kwargs)
 
     return savefig
