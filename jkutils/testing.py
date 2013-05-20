@@ -226,7 +226,7 @@ def crossvalidate(net_constructor, data, inputcols, targetcols, ntimes=5,
 
 
 def plot_comparison(paramchoices, results, savefig=None, figname=None,
-                    xlabel=None):
+                    xlabel=None, figure=None):
     '''
     Plots the results of parameter runs as a boxplot.
     You might need to call plt.show() afterwards.
@@ -242,9 +242,12 @@ def plot_comparison(paramchoices, results, savefig=None, figname=None,
 
     figname - An optional filename to save the figure as.
 
+    figure - Optional figure to plot in
+
     xlabel - Optional label for x-axis
     '''
-    plt.figure()
+    if figure is None:
+        plt.figure()
     plt.boxplot(results)
 
     #plt.ylim((0.5, 1.0))
@@ -322,7 +325,8 @@ def crossvalidate_parameter(net_constructor, data, inputcols, targetcols,
 
 
 def compare_parameter(net_constructor, data, inputcols, targetcols,
-                      name, values, savefig=None, ntimes=10, plot=True):
+                      name, values, savefig=None, ntimes=10, plot=True,
+                      figure=None):
     '''
     Keyword arguments:
     net_constructor - A function that should return a new neural network with
@@ -350,6 +354,7 @@ def compare_parameter(net_constructor, data, inputcols, targetcols,
     ntimes - The number of times to train the network.
 
     plot[true] - Set to false if no plotting desired
+    figure - Optional existing figure to plot to
 
     Returns a tuple (variable, result)
     '''
@@ -361,7 +366,8 @@ def compare_parameter(net_constructor, data, inputcols, targetcols,
     sortedresults = [testresults[k] for k in sorted(testresults.keys())]
 
     if plot:
-        plot_comparison(labels, sortedresults, savefig, name, xlabel = name)
+        plot_comparison(labels, sortedresults, savefig, name, xlabel = name,
+                        figure=figure)
 
     return (sorted(testresults.keys()), sortedresults)
 
