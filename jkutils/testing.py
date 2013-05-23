@@ -153,7 +153,10 @@ def crossvalidate(net_constructor, data, inputcols, targetcols, ntimes=5,
 
     Keyword arguments:
     net_constructor - A function that should return a new neural network with
-    all properties set to suitable values.
+    all properties set to suitable values. The model must a "learn" method,
+    and one of the following: output or output_all, where they are called as:
+    output(x), for x in data[:, inputcols]
+    output_all(data[:, inputcols)
 
     data - The data to do crossvalidation on. Should be a two-dimensional
     numpy array (or compatible).
@@ -213,12 +216,18 @@ def crossvalidate(net_constructor, data, inputcols, targetcols, ntimes=5,
                       data[trnindices][:, targetcols])
 
             # Training result
-            predictions = np.array([net.output(x) for x in data[trnindices][:, inputcols]]).ravel()
+            try:
+                predictions = np.array(net.output_all(data[trnindices][:, inputcols])).ravel()
+            except:
+                predictions = np.array([net.output(x) for x in data[trnindices][:, inputcols]]).ravel()
             c_index = get_C_index(data[trnindices][:, targetcols], predictions)
             trnresults.append(c_index)
 
             # Validation result
-            predictions = np.array([net.output(x) for x in data[valindices][:, inputcols]]).ravel()
+            try:
+                predictions = np.array(net.output_all(data[valindices][:, inputcols])).ravel()
+            except:
+                predictions = np.array([net.output(x) for x in data[valindices][:, inputcols]]).ravel()
             c_index = get_C_index(data[valindices][:, targetcols], predictions)
             valresults.append(c_index)
 
