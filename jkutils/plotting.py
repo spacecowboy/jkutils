@@ -44,6 +44,8 @@ def plotcorr(x, headers=None, figure=None, axis=None):
     if axis is None:
         axis = plt.gca()
     ax = axis
+    ax.set_axis_bgcolor('white')
+    ax.grid('off')
     lim = len(x)
     for i in range(len(x)):
         for j in range(len(x)):
@@ -94,7 +96,7 @@ def plotcorr(x, headers=None, figure=None, axis=None):
     return figure
 
 
-def rhist(ax, data, **keywords):
+def rhist(data, ax=None, **keywords):
     """Creates a histogram with default style parameters to look like ggplot2
     Is equivalent to calling ax.hist and accepts the same keyword parameters.
     If style parameters are explicitly defined, they will not be overwritten.
@@ -117,10 +119,13 @@ def rhist(ax, data, **keywords):
     for k, v in defaults.items():
         if k not in keywords: keywords[k] = v
 
+    if ax is None:
+        ax = plt.gca()
+
     return ax.hist(data, **keywords)
 
 
-def rbox(ax, data, **keywords):
+def rbox(x, ax=None, **keywords):
     """Creates a ggplot2 style boxplot, is eqivalent to calling ax.boxplot with the following additions:
 
     Keyword arguments:
@@ -128,33 +133,60 @@ def rbox(ax, data, **keywords):
     names -- array-like collection of box names which are passed on as tick labels
 
     """
+    if ax is None:
+        ax = plt.gca()
 
     #hasColors = 'colors' in keywords
-    if 'colors' in keywords and keywords['colors'] is not None:
-        colors = keywords['colors']
-        keywords.pop('colors')
-        hasColors = True
-    elif 'colors' in keywords:
-        hasColors = False
+    if 'colors' in keywords:
+        if keywords['colors'] is None:
+            hasColors = False
+        else:
+            colors = keywords['colors']
+            keywords.pop('colors')
+            hasColors = True
     else:
-        colors = '#A6CEE3, #1F78B4, #B2DF8A, #33A02C, #FB9A99, #E31A1C, #FDBF6F, #FF7F00, #CAB2D6, #6A3D9A, #FFFF99, #B15928'.split(', ')
+        colors = '#A6CEE3, #1F78B4, #B2DF8A, #33A02C, #FB9A99, #E31A1C, \
+#FDBF6F, #FF7F00, #CAB2D6, #6A3D9A, #FFFF99, #B15928'.split(', ')
         hasColors = True
 
     if 'names' in keywords:
         ax.tickNames = plt.setp(ax, xticklabels=keywords['names'] )
         keywords.pop('names')
 
-    bp = ax.boxplot(data, **keywords)
+    bp = ax.boxplot(x, **keywords)
     plt.setp(bp['boxes'], color='black')
     plt.setp(bp['whiskers'], color='black', linestyle = 'solid')
-    plt.setp(bp['fliers'], color='black', alpha = 0.9, marker= 'o', markersize = 3)
+    plt.setp(bp['fliers'], color='black', alpha = 0.9, marker= 'o',
+             markersize = 3)
     plt.setp(bp['medians'], color='black')
 
-    numBoxes = len(data)
+    # convert x to a list of vectors, just as it's done in boxplot
+    if hasattr(x, 'shape'):
+        if len(x.shape) == 1:
+            if hasattr(x[0], 'shape'):
+                x = list(x)
+            else:
+                x = [x,]
+        elif len(x.shape) == 2:
+            nr, nc = x.shape
+            if nr == 1:
+                x = [x]
+            elif nc == 1:
+                x = [x.ravel()]
+            else:
+                x = [x[:,i] for i in xrange(nc)]
+        else:
+            raise ValueError("input x can have no more than 2 dimensions")
+    if not hasattr(x[0], '__len__'):
+        x = [x]
+
+    numBoxes = len(x)
     for i in range(numBoxes):
         box = bp['boxes'][i]
         boxX = []
         boxY = []
+        # TODO
+        # Does not support notch yet
         for j in range(5):
           boxX.append(box.get_xdata()[j])
           boxY.append(box.get_ydata()[j])
