@@ -199,3 +199,61 @@ def rbox(x, ax=None, **keywords):
 
         ax.add_patch(boxPolygon)
     return bp
+
+
+def setstyle(**kwargs):
+    '''Sets a more reasonable style for matplotlib.
+    Any parameter for rcParams can be sent as keyword arguments
+    to this function. This can be useful in iPython Notebook
+    where you want to set a specific savefig.dpi to get pictures
+    of a certain size for example. To handle dots in names,
+    you can do it like:
+
+    setstyle(**{'savefig.dpi':50})
+
+    Please remember that not all functions take these values
+    into account, like boxplot. In that case, you can
+    access the colors for lines as:
+
+    import matplotlib as mpl
+    colors = mpl.rcParams['axes.color_cycle']
+
+    For boxplot, see the rbox function for a colorized boxplot.'''
+    import matplotlib as mpl
+    # Axes
+    mpl.rcParams['axes.facecolor'] = 'fafafa'
+    mpl.rcParams['axes.edgecolor'] = 'white'
+    mpl.rcParams['axes.linewidth'] = 1
+    mpl.rcParams['axes.labelsize'] = 'large'
+    mpl.rcParams['axes.labelcolor'] = '555555'
+    mpl.rcParams['axes.axisbelow'] = True
+    # Set some more sensible color defaults for plots
+    mpl.rcParams['axes.color_cycle'] = '#A6CEE3, #1F78B4, #B2DF8A, \
+#33A02C, #FB9A99, #E31A1C, #FDBF6F, #FF7F00, #CAB2D6, \
+#6A3D9A, #FFFF99, #B15928'.split(', ')
+    # Ticks
+    mpl.rcParams['xtick.color'] = '555555'
+    mpl.rcParams['xtick.direction'] = 'out'
+    mpl.rcParams['ytick.color'] = '555555'
+    mpl.rcParams['ytick.direction'] = 'out'
+    # Grid
+    mpl.rcParams['grid.color'] = 'lightgrey'
+    mpl.rcParams['grid.linestyle'] = '-'
+    mpl.rcParams['axes.grid'] = True
+    # Legend
+    mpl.rcParams['legend.fancybox'] = True
+    mpl.rcParams['legend.numpoints'] = 1
+    # Figure
+    mpl.rcParams['figure.figsize'] = (11, 8)
+    mpl.rcParams['figure.dpi'] = 200
+    mpl.rcParams['figure.facecolor'] = 'white'
+    mpl.rcParams['figure.edgecolor'] = '0.50'
+    mpl.rcParams['figure.subplot.bottom'] = 0.15
+    mpl.rcParams['figure.subplot.top'] = 0.85
+    mpl.rcParams['figure.subplot.hspace'] = 0.5
+    # Savefig
+    mpl.rcParams['savefig.dpi'] = 200
+    
+    # Set user specified stuff
+    for k, v in kwargs.items():
+        mpl.rcParams[k] = v
