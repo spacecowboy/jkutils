@@ -134,12 +134,12 @@ def crossvalidate_mse(net_constructor, data, inputcols, targetcols, ntimes=5,
 
             # Training result
             predictions = np.array([net.output(x) for x in data[trnindices][:, inputcols]]).ravel()
-            mse = np.sum((data[trnindices][:, targetcols] - predictions)**2) / len(data)
+            mse = np.sum((data[trnindices][:, targetcols] - predictions)**2) / len(predictions)
             trnresults.append(mse)
 
             # Validation result
             predictions = np.array([net.output(x) for x in data[valindices][:, inputcols]]).ravel()
-            mse = np.sum((data[valindices][:, targetcols] - predictions)**2) / len(data)
+            mse = np.sum((data[valindices][:, targetcols] - predictions)**2) / len(predictions)
 
             valresults.append(mse)
 
