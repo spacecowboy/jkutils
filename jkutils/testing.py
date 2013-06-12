@@ -134,12 +134,12 @@ def crossvalidate_mse(net_constructor, data, inputcols, targetcols, ntimes=5,
 
             # Training result
             predictions = np.array([net.output(x) for x in data[trnindices][:, inputcols]]).ravel()
-            mse = np.sum((data[trnindices][:, targetcols] - predictions)**2) / len(predictions)
+            mse = np.sum((data[trnindices][:, targetcols] - predictions)**2) / len(predictions) / 2.0
             trnresults.append(mse)
 
             # Validation result
             predictions = np.array([net.output(x) for x in data[valindices][:, inputcols]]).ravel()
-            mse = np.sum((data[valindices][:, targetcols] - predictions)**2) / len(predictions)
+            mse = np.sum((data[valindices][:, targetcols] - predictions)**2) / len(predictions) / 2.0
 
             valresults.append(mse)
 
@@ -153,7 +153,10 @@ def crossvalidate(net_constructor, data, inputcols, targetcols, ntimes=5,
 
     Keyword arguments:
     net_constructor - A function that should return a new neural network with
-    all properties set to suitable values.
+    all properties set to suitable values. The model must a "learn" method,
+    and one of the following: output or output_all, where they are called as:
+    output(x), for x in data[:, inputcols]
+    output_all(data[:, inputcols)
 
     data - The data to do crossvalidation on. Should be a two-dimensional
     numpy array (or compatible).
@@ -163,7 +166,7 @@ def crossvalidate(net_constructor, data, inputcols, targetcols, ntimes=5,
 
     targetcols - A tuple/list expected to have two members. First being the
     column number of the survival times. The second being the column number
-    of the event column.
+    of the event column. The data sets are stratified for the event column.
 
     ntimes - The number of times to divide the data.
 
@@ -213,12 +216,18 @@ def crossvalidate(net_constructor, data, inputcols, targetcols, ntimes=5,
                       data[trnindices][:, targetcols])
 
             # Training result
-            predictions = np.array([net.output(x) for x in data[trnindices][:, inputcols]]).ravel()
+            try:
+                predictions = np.array(net.output_all(data[trnindices][:, inputcols])).ravel()
+            except:
+                predictions = np.array([net.output(x) for x in data[trnindices][:, inputcols]]).ravel()
             c_index = get_C_index(data[trnindices][:, targetcols], predictions)
             trnresults.append(c_index)
 
             # Validation result
-            predictions = np.array([net.output(x) for x in data[valindices][:, inputcols]]).ravel()
+            try:
+                predictions = np.array(net.output_all(data[valindices][:, inputcols])).ravel()
+            except:
+                predictions = np.array([net.output(x) for x in data[valindices][:, inputcols]]).ravel()
             c_index = get_C_index(data[valindices][:, targetcols], predictions)
             valresults.append(c_index)
 
@@ -226,7 +235,7 @@ def crossvalidate(net_constructor, data, inputcols, targetcols, ntimes=5,
 
 
 def plot_comparison(paramchoices, results, savefig=None, figname=None,
-                    xlabel=None):
+                    xlabel=None, figure=None):
     '''
     Plots the results of parameter runs as a boxplot.
     You might need to call plt.show() afterwards.
@@ -242,9 +251,12 @@ def plot_comparison(paramchoices, results, savefig=None, figname=None,
 
     figname - An optional filename to save the figure as.
 
+    figure - Optional figure to plot in
+
     xlabel - Optional label for x-axis
     '''
-    plt.figure()
+    if figure is None:
+        plt.figure()
     plt.boxplot(results)
 
     #plt.ylim((0.5, 1.0))
@@ -322,7 +334,8 @@ def crossvalidate_parameter(net_constructor, data, inputcols, targetcols,
 
 
 def compare_parameter(net_constructor, data, inputcols, targetcols,
-                      name, values, savefig=None, ntimes=10):
+                      name, values, savefig=None, ntimes=10, plot=True,
+                      figure=None):
     '''
     Keyword arguments:
     net_constructor - A function that should return a new neural network with
@@ -348,6 +361,11 @@ def compare_parameter(net_constructor, data, inputcols, targetcols,
     "get_savefig()".
 
     ntimes - The number of times to train the network.
+
+    plot[true] - Set to false if no plotting desired
+    figure - Optional existing figure to plot to
+
+    Returns a tuple (variable, result)
     '''
     testresults = test_parameter_values(net_constructor, data, inputcols,
                                     targetcols, name, values, ntimes)
@@ -356,8 +374,11 @@ def compare_parameter(net_constructor, data, inputcols, targetcols,
 
     sortedresults = [testresults[k] for k in sorted(testresults.keys())]
 
-    plot_comparison(labels, sortedresults, savefig, name, xlabel = name)
+    if plot:
+        plot_comparison(labels, sortedresults, savefig, name, xlabel = name,
+                        figure=figure)
 
+    return (sorted(testresults.keys()), sortedresults)
 
 
 def get_savefig(savedir, prefix='', filename=None):
@@ -367,6 +388,8 @@ def get_savefig(savedir, prefix='', filename=None):
     Files are saved with eps and png extensions in the
     designated directory and prefixed with the specified
     prefix as "prefix_filename.extension"
+
+    DPI defaults to 300 to get high resolution png files.
 
     Keyword arguments:
     savedir - Folder in which to save figures
@@ -395,6 +418,10 @@ def get_savefig(savedir, prefix='', filename=None):
         if 'bbox_inches' not in kwargs:
             kwargs['bbox_inches'] = 'tight'
 
+        # Make the images high resolution if not otherwise specified
+        if 'dpi' not in kwargs:
+            kwargs['dpi'] = 300
+
         # Default filename
         fname = filename
         if args is None or len(args) == 0:
@@ -409,9 +436,10 @@ def get_savefig(savedir, prefix='', filename=None):
         if fname is None:
             raise ValueError("A filename must be specified!")
 
+        # Save png first as eps crashes on big images
+        plt.savefig(*([fname + '.png'] + args), **kwargs)
+
         # Save eps
         plt.savefig(*([fname + '.eps'] + args), **kwargs)
-        # Save png
-        plt.savefig(*([fname + '.png'] + args), **kwargs)
 
     return savefig

@@ -120,6 +120,8 @@ def get_C_index(T, outputs):
     Non-censored points can be compared with all other non-censored points
     and all later censored points.
     Censored points can only be compared to earlier non-censored points.
+    
+    If X[x] = X[y], 0.5 is added. Ties in T are not valid comparisons.
     """
 
     total = 0
@@ -141,6 +143,8 @@ def get_C_index(T, outputs):
                 total += 1
                 if outputs[x, 0] < outputs[y, 0]:
                     sum += 1
+                elif outputs[x, 0] == outputs[y, 0]:
+                    sum += 0.5
 
     print(("Sum: {}".format(sum)))
     print(("Total: {}".format(total)))
