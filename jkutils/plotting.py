@@ -23,7 +23,7 @@ def wraparray(array, prefix=None, suffix=None):
 
     return xc
 
-def plotcorr(x, headers=None, figure=None, axis=None):
+def plotcorr(x, headers=None, figure=None, axis=None, legend=False):
     '''
     Plot a correlation matrix, much like the 'plotcorr' command in R.
 
@@ -92,6 +92,55 @@ def plotcorr(x, headers=None, figure=None, axis=None):
         tick[0].label1On = False
         tick[0].label2.set_rotation('vertical')
         tick[0].label2.set_size('xx-large')
+
+    if not legend:
+        return figure
+
+    # Explanatory legend
+    labels = []
+    artists = []
+    centers = np.linspace(-1, 1, len(colors))
+    diff = (centers[1] - centers[0]) / 2
+    for i, c in enumerate(colors):
+        #if i != 0 and i != len(colors)/2 and i % 2 != 0:
+        #    continue
+        l, r = centers[i] - diff, centers[i]  + diff
+        if i == 0:
+            # No left edge
+            l = centers[i]
+        elif i == len(colors) - 1:
+            # No right edge
+            r = centers[i]
+        labels.append(r"${:.1f} < p < {:.1f}$".format(l, r))
+        # Angle
+        if centers[i] <= 0:
+            angle = -45
+        else:
+            angle = 45
+        e = Ellipse(xy=(0, 0), width=1, height=(1 - abs(centers[i])),
+                    angle=angle)
+        e.set_facecolor(c)
+        artists.append(e)
+
+    from matplotlib.legend_handler import HandlerPatch
+
+    def make_ellipse(legend, orig_handle,
+                            xdescent, ydescent,
+                            width, height, fontsize):
+        #size = height+ydescent
+        size = width+xdescent
+        p = Ellipse(xy=(0.5*width-0.5*xdescent, 0.5*height-0.5*ydescent),
+                    width = size*orig_handle.width,
+                    height=size*orig_handle.height,
+                    angle=orig_handle.angle)
+        return p
+
+    ax.legend(artists, labels,
+              handler_map={Ellipse:HandlerPatch(patch_func=make_ellipse)},
+              labelspacing=1.3, loc='upper left',
+              title='p = Pearson correlation',
+              bbox_to_anchor=(1, 0, 1, 1))#, bbox_transform=gcf().transFigure)
+    #, fontsize='x-large'
 
     return figure
 
@@ -253,7 +302,7 @@ def setstyle(**kwargs):
     mpl.rcParams['figure.subplot.hspace'] = 0.5
     # Savefig
     mpl.rcParams['savefig.dpi'] = 200
-    
+
     # Set user specified stuff
     for k, v in kwargs.items():
         mpl.rcParams[k] = v
