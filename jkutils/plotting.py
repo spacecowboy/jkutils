@@ -112,6 +112,9 @@ def plotcorr(x, headers=None, figure=None, axis=None, legend=False):
             # No right edge
             r = centers[i]
         labels.append(r"${:.1f} < p < {:.1f}$".format(l, r))
+        if mpl.rcParams['text.usetex']:
+            labels[-1] = "\Large{" + labels[-1] + "}"
+
         # Angle
         if centers[i] <= 0:
             angle = -45
@@ -135,12 +138,17 @@ def plotcorr(x, headers=None, figure=None, axis=None, legend=False):
                     angle=orig_handle.angle)
         return p
 
-    ax.legend(artists, labels,
-              handler_map={Ellipse:HandlerPatch(patch_func=make_ellipse)},
-              labelspacing=1.3, loc='upper left',
-              title='p = Pearson correlation',
-              bbox_to_anchor=(1, 0, 1, 1))#, bbox_transform=gcf().transFigure)
-    #, fontsize='x-large'
+    title = 'p = Pearson correlation'
+    fontsize = 'x-large'
+    if mpl.rcParams['text.usetex']:
+        title = '\Large{' + title + '}'
+        fontsize = None
+
+    leg = ax.legend(artists, labels,
+                    handler_map={Ellipse: HandlerPatch(patch_func=make_ellipse)},
+                    labelspacing=1.3, fontsize=fontsize, loc='upper left',
+                    title=title, bbox_to_anchor=(1, 0, 1, 1))
+    leg.legendPatch.set_facecolor('white')
 
     return figure
 
