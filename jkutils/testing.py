@@ -146,7 +146,7 @@ def crossvalidate_mse(net_constructor, data, inputcols, targetcols, ntimes=5,
     return (trnresults, valresults)
 
 def crossvalidate(net_constructor, data, inputcols, targetcols, ntimes=5,
-                  kfold=3):
+                  kfold=3, evalfunc = None, evalresults = None):
     '''
     Does crossvalidation testing on a network the designated
     number of times. Random divisions are stratified for events.
@@ -172,6 +172,12 @@ def crossvalidate(net_constructor, data, inputcols, targetcols, ntimes=5,
 
     kfold - The number of folds to divide the data in. Total number of results
     will equal ntimes * kfold. Where each row has featured in a test set ntimes.
+
+    evalfunc - Function to apply at end of training. Called with the following
+    signature:
+    evalfunc(net, data, inputcols, targetcols, trnindices, valindices, evalresults)
+    Results are expected to be placed in evalresults. Only called if both
+    evalfunc and evalresults is not None.
 
     Returns a tuple: (trnresultlist, valresultlist)
     where each list is ntimes * kfold long.
@@ -230,6 +236,10 @@ def crossvalidate(net_constructor, data, inputcols, targetcols, ntimes=5,
                 predictions = np.array([net.output(x) for x in data[valindices][:, inputcols]]).ravel()
             c_index = get_C_index(data[valindices][:, targetcols], predictions)
             valresults.append(c_index)
+
+            if evalfunc is not None and evalresults is not None:
+                evalfunc(net, data, inputcols, targetcols,
+                         trnindices, valindices, evalresults)
 
     return (trnresults, valresults)
 
