@@ -4,6 +4,10 @@ import matplotlib as mpl
 import numpy as np
 import matplotlib.pyplot as plt
 
+plt_colors = ['#E41A1C', '#377EB8', '#4DAF4A',
+              '#984EA3', '#FF7F00', '#FFFF33',
+              '#A65628', '#F781BF', '#999999']
+
 def wraparray(array, prefix=None, suffix=None):
     '''Returns an array with the string versions of the
     items of the given array wrapped by the given prefixes
@@ -274,6 +278,9 @@ def setstyle(**kwargs):
 
     import matplotlib as mpl
     colors = mpl.rcParams['axes.color_cycle']
+
+    And set some good colors by doing:
+    setstyle(**{'axes.color_cycle':jkutils.plt_colors})
 
     For boxplot, see the rbox function for a colorized boxplot.'''
     import matplotlib as mpl
