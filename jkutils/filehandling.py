@@ -1,6 +1,6 @@
 import numpy as np
 import re
-import os
+import os, errno
 from os import path
 from random import random, sample
 import csv
