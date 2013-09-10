@@ -1,5 +1,6 @@
 import numpy as np
 import re
+import os
 from os import path
 from random import random, sample
 import csv
