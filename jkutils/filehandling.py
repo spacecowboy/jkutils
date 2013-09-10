@@ -4,6 +4,17 @@ from os import path
 from random import random, sample
 import csv
 
+def mkdir_p(path):
+    """Like mkdir -p it creates all directories
+    in a path if they do not exist"""
+    try:
+        os.makedirs(path)
+    except OSError as exc:
+        if exc.errno == errno.EEXIST and os.path.isdir(path):
+            pass
+        else:
+            raise
+
 def parse_header(headers):
     """
     In Python3, this method could be done in one line:
@@ -396,4 +407,3 @@ def get_cross_validation_sets(inputs, targets, pieces, binary_column = None, ret
         indices = list(zip(training_indices_sets, validation_indices_sets))
         data_sets = list(zip(training, validation))
         return (data_sets, indices)
-
