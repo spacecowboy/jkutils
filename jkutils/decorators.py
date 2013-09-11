@@ -96,7 +96,7 @@ def lazyfile(path='./.lazyfile/', idgen=None):
                 # Don't accept errors here
                 mkdir_p(path)
                 with open(fpath, 'wb') as savefile:
-                    pickle.dump(result, savefile, -1)
+                    pickle.dump(result, savefile, pickle.HIGHEST_PROTOCOL)
 
             return result
         return _lazyfunc
