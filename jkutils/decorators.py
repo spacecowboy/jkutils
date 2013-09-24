@@ -1,6 +1,7 @@
 '''Some decorators that are handy to use at times'''
 
 import os, pickle, errno
+from functools import wraps
 from filehandling import mkdir_p
 
 
@@ -76,6 +77,7 @@ def lazyfile(path='./.lazyfile/', idgen=None):
         return "Will never run"
     """
     def _wrapped_lazyfunc(fn):
+        @wraps(fn)
         def _lazyfunc(*args, **kwargs):
             result = None
             fname = '._lazyfile_{}'.format(fn.__name__)
