@@ -452,4 +452,7 @@ def get_savefig(savedir, prefix='', filename=None):
         # Save eps
         plt.savefig(*([fname + '.eps'] + args), **kwargs)
 
+        # Save pdf
+        plt.savefig(*([fname + '.pdf'] + args), **kwargs)
+
     return savefig

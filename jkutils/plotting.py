@@ -27,7 +27,8 @@ def wraparray(array, prefix=None, suffix=None):
 
     return xc
 
-def plotcorr(x, headers=None, figure=None, axis=None, legend=False):
+def plotcorr(x, headers=None, figure=None, axis=None, legend=False,
+             bbox_anchor=None):
     '''
     Plot a correlation matrix, much like the 'plotcorr' command in R.
 
@@ -40,6 +41,9 @@ def plotcorr(x, headers=None, figure=None, axis=None, legend=False):
     '''
     colors = ["#A50F15","#DE2D26","#FB6A4A","#FCAE91","#FEE5D9","white",
               "#EFF3FF","#BDD7E7","#6BAED6","#3182BD","#08519C"]
+
+    if bbox_anchor is None:
+        bbox_anchor = (1, 0, 1, 1)
 
     if figure is None and axis is None:
         # Scale by size of array
@@ -84,18 +88,20 @@ def plotcorr(x, headers=None, figure=None, axis=None, legend=False):
 
     if (headers is not None and len(headers) == len(x)):
         if mpl.rcParams['text.usetex']:
-            ax.set_yticklabels(wraparray(headers, '\huge{', '}'))
-            ax.set_xticklabels(wraparray(headers, '\huge{', '}'))
+            #ax.set_yticklabels(wraparray(headers, '\huge{', '}'))
+            ax.set_yticklabels(wraparray(headers, '\normalsize{', '}'))
+            ax.set_xticklabels(wraparray(headers, '\normalsize{', '}'))
         else:
-            ax.set_yticklabels(headers, fontsize='xx-large')
-            ax.set_xticklabels(headers, fontsize='xx-large')
+            #xx-large
+            ax.set_yticklabels(headers, fontsize='medium')
+            ax.set_xticklabels(headers, fontsize='medium')
 
     # Move bottom to top
     for tick in ax.xaxis.iter_ticks():
         tick[0].label2On = True
         tick[0].label1On = False
         tick[0].label2.set_rotation('vertical')
-        tick[0].label2.set_size('xx-large')
+        tick[0].label2.set_size('medium')
 
     if not legend:
         return figure
@@ -117,7 +123,7 @@ def plotcorr(x, headers=None, figure=None, axis=None, legend=False):
             r = centers[i]
         labels.append(r"${:.1f} < p < {:.1f}$".format(l, r))
         if mpl.rcParams['text.usetex']:
-            labels[-1] = "\Large{" + labels[-1] + "}"
+            labels[-1] = "\small{" + labels[-1] + "}"
 
         # Angle
         if centers[i] <= 0:
@@ -132,8 +138,8 @@ def plotcorr(x, headers=None, figure=None, axis=None, legend=False):
     from matplotlib.legend_handler import HandlerPatch
 
     def make_ellipse(legend, orig_handle,
-                            xdescent, ydescent,
-                            width, height, fontsize):
+                     xdescent, ydescent,
+                     width, height, fontsize):
         #size = height+ydescent
         size = width+xdescent
         p = Ellipse(xy=(0.5*width-0.5*xdescent, 0.5*height-0.5*ydescent),
@@ -143,15 +149,15 @@ def plotcorr(x, headers=None, figure=None, axis=None, legend=False):
         return p
 
     title = 'p = Pearson correlation'
-    fontsize = 'x-large'
+    fontsize = 'medium'
     if mpl.rcParams['text.usetex']:
-        title = '\Large{' + title + '}'
+        title = '\small{' + title + '}'
         fontsize = None
 
     leg = ax.legend(artists, labels,
                     handler_map={Ellipse: HandlerPatch(patch_func=make_ellipse)},
                     labelspacing=1.3, fontsize=fontsize, loc='upper left',
-                    title=title, bbox_to_anchor=(1, 0, 1, 1))
+                    title=title, bbox_to_anchor=bbox_anchor)
     leg.legendPatch.set_facecolor('white')
 
     return figure
