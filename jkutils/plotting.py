@@ -89,8 +89,8 @@ def plotcorr(x, headers=None, figure=None, axis=None, legend=False,
     if (headers is not None and len(headers) == len(x)):
         if mpl.rcParams['text.usetex']:
             #ax.set_yticklabels(wraparray(headers, '\huge{', '}'))
-            ax.set_yticklabels(wraparray(headers, '\normalsize{', '}'))
-            ax.set_xticklabels(wraparray(headers, '\normalsize{', '}'))
+            ax.set_yticklabels(wraparray(headers, r'\normalsize{', '}'))
+            ax.set_xticklabels(wraparray(headers, r'\normalsize{', '}'))
         else:
             #xx-large
             ax.set_yticklabels(headers, fontsize='medium')
@@ -123,7 +123,7 @@ def plotcorr(x, headers=None, figure=None, axis=None, legend=False,
             r = centers[i]
         labels.append(r"${:.1f} < p < {:.1f}$".format(l, r))
         if mpl.rcParams['text.usetex']:
-            labels[-1] = "\small{" + labels[-1] + "}"
+            labels[-1] = r"\small{" + r"${:.1f} < \rho < {:.1f}$".format(l, r) + "}"
 
         # Angle
         if centers[i] <= 0:
@@ -151,7 +151,7 @@ def plotcorr(x, headers=None, figure=None, axis=None, legend=False,
     title = 'p = Pearson correlation'
     fontsize = 'medium'
     if mpl.rcParams['text.usetex']:
-        title = '\small{' + title + '}'
+        title = r'\small{$\rho$ = Pearson correlation}'
         fontsize = None
 
     leg = ax.legend(artists, labels,
