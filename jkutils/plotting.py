@@ -28,7 +28,7 @@ def wraparray(array, prefix=None, suffix=None):
     return xc
 
 def plotcorr(x, headers=None, figure=None, axis=None, legend=False,
-             bbox_anchor=None):
+             bbox_anchor=None, non_zero=False):
     '''
     Plot a correlation matrix, much like the 'plotcorr' command in R.
 
@@ -36,6 +36,9 @@ def plotcorr(x, headers=None, figure=None, axis=None, legend=False,
     so you typically have arrays of shape [15, 500] or so.
 
     If no figure or axis is given, one is created and scaled by the number of variables
+
+    If specified, non_zero will only compare cases where both variables
+    are non-zero.
 
     Returns the figure
     '''
@@ -57,8 +60,15 @@ def plotcorr(x, headers=None, figure=None, axis=None, legend=False,
     lim = len(x)
     for i in range(len(x)):
         for j in range(len(x)):
-            # Calculate correlation
-            p = pearsonr(x[i], x[j])[0]
+            # all of them
+            valid_rows = x[i] == x[i]
+            if non_zero:
+                # non-zero indices
+                inz = x[i] != 0
+                jnz = x[j] != 0
+                valid_rows = inz * jnz
+            # Calculate correlation (p is actually rho)
+            p = pearsonr(x[i][valid_rows], x[j][valid_rows])[0]
             # Pick a color
             c = p
             c += 1
