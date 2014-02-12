@@ -300,6 +300,9 @@ def setstyle(**kwargs):
 
     For boxplot, see the rbox function for a colorized boxplot.'''
     import matplotlib as mpl
+    # Tex
+    mpl.rcParams['text.usetex'] = True
+    mpl.rcParams['text.latex.unicode'] = True
     # Axes
     mpl.rcParams['axes.facecolor'] = 'fafafa'
     mpl.rcParams['axes.edgecolor'] = 'white'
@@ -324,15 +327,15 @@ def setstyle(**kwargs):
     mpl.rcParams['legend.fancybox'] = True
     mpl.rcParams['legend.numpoints'] = 1
     # Figure
-    mpl.rcParams['figure.figsize'] = (11, 8)
-    mpl.rcParams['figure.dpi'] = 200
+    mpl.rcParams['figure.figsize'] = (5, 4)
+    mpl.rcParams['figure.dpi'] = 100
     mpl.rcParams['figure.facecolor'] = 'white'
     mpl.rcParams['figure.edgecolor'] = '0.50'
     mpl.rcParams['figure.subplot.bottom'] = 0.15
     mpl.rcParams['figure.subplot.top'] = 0.85
     mpl.rcParams['figure.subplot.hspace'] = 0.5
     # Savefig
-    mpl.rcParams['savefig.dpi'] = 200
+    mpl.rcParams['savefig.dpi'] = 100
 
     # Set user specified stuff
     for k, v in kwargs.items():
