@@ -33,6 +33,13 @@ def setaxiscolors(ax):
     ax.xaxis.label.set_color(_almost_black)
     ax.yaxis.label.set_color(_almost_black)
 
+def cleanaxis(ax=None):
+    if ax is None:
+        ax = plt.gca()
+    removeticks(ax)
+    removespines(ax)
+    setaxiscolors(ax)
+
 def hist(*args, **kwargs):
     restore = tweakstyle(below=False, bg='white', gridcolor='white', grid=False)
     if 'edgecolor' not in kwargs:
