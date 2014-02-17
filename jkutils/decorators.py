@@ -2,7 +2,7 @@
 
 import os, pickle, errno
 from functools import wraps
-from filehandling import mkdir_p
+from .filehandling import mkdir_p
 
 
 def lazyproperty(fn):

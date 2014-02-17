@@ -1,3 +1,4 @@
+import os
 from scipy.stats import pearsonr
 from matplotlib.patches import Ellipse
 import matplotlib as mpl
