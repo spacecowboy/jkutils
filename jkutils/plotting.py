@@ -399,6 +399,9 @@ def setstyle(**kwargs):
     mpl.rcParams['figure.subplot.bottom'] = 0.15
     mpl.rcParams['figure.subplot.top'] = 0.85
     mpl.rcParams['figure.subplot.hspace'] = 0.5
+    # Latex font everywhere
+    mpl.rcParams['font.family'] = 'serif'
+    mpl.rcParams['font.serif'] = 'Computer Modern'
     # Savefig
     mpl.rcParams['savefig.dpi'] = 100
 
