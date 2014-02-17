@@ -3,6 +3,9 @@ from scipy.stats import pearsonr
 from matplotlib.patches import Ellipse
 import matplotlib as mpl
 import numpy as np
+# Import all into namespace
+from matplotlib.pyplot import *
+# But keep a handle to original as well
 import matplotlib.pyplot as plt
 
 plt_colors = ['#E41A1C', '#377EB8', '#4DAF4A',
@@ -26,12 +29,14 @@ def removeticks(ax):
     ax.yaxis.set_ticks_position('none')
 
 def setaxiscolors(ax):
-    for spine in ['top', 'bottom', 'right', 'left']:
-        ax.spines[spine].set_linewidth(0.5)
-        ax.spines[spine].set_color(_almost_black)
     # Change the labels to the off-black
     ax.xaxis.label.set_color(_almost_black)
     ax.yaxis.label.set_color(_almost_black)
+
+def setspinecolors(ax):
+    for spine in ['top', 'bottom', 'right', 'left']:
+        ax.spines[spine].set_linewidth(0.5)
+        ax.spines[spine].set_color(_almost_black)
 
 def cleanaxis(ax=None):
     if ax is None:
@@ -39,6 +44,7 @@ def cleanaxis(ax=None):
     removeticks(ax)
     removespines(ax)
     setaxiscolors(ax)
+    setspinecolors(ax)
 
 def hist(*args, **kwargs):
     restore = tweakstyle(below=False, bg='white', gridcolor='white', grid=False)
@@ -49,7 +55,18 @@ def hist(*args, **kwargs):
     removespines(ax)
     removeticks(ax)
     setaxiscolors(ax)
+    setspinecolors(ax)
     ax.grid(axis='y', linestyle='-', linewidth=0.5)
+    restore()
+
+def plot(*args, **kwargs):
+    restore = tweakstyle(below=True, bg='#fafafa', grid=True,
+                         gridcolor='lightgrey')
+    plt.plot(*args, **kwargs)
+    ax = plt.gca()
+    removespines(ax)
+    removeticks(ax)
+    setaxiscolors(ax)
     restore()
 
 def wraparray(array, prefix=None, suffix=None):
