@@ -9,6 +9,42 @@ plt_colors = ['#E41A1C', '#377EB8', '#4DAF4A',
               '#984EA3', '#FF7F00', '#FFFF33',
               '#A65628', '#F781BF', '#999999']
 
+_set2 = ['#66C2A5', '#FC8D62', '#8DA0CB', '#E78AC3',
+         '#A6D854', '#FFD92F', '#E5C494', '#B3B3B3']
+_almost_black = '#262626'
+_light_grey = '#fafafa'
+
+def removespines(ax, spines_to_remove=None):
+    '''Remove by default ['top', 'right']'''
+    if spines_to_remove is None:
+        spines_to_remove = ['top', 'right']
+    for spine in spines_to_remove:
+        ax.spines[spine].set_visible(False)
+
+def removeticks(ax):
+    ax.xaxis.set_ticks_position('none')
+    ax.yaxis.set_ticks_position('none')
+
+def setaxiscolors(ax):
+    for spine in ['top', 'bottom', 'right', 'left']:
+        ax.spines[spine].set_linewidth(0.5)
+        ax.spines[spine].set_color(_almost_black)
+    # Change the labels to the off-black
+    ax.xaxis.label.set_color(_almost_black)
+    ax.yaxis.label.set_color(_almost_black)
+
+def hist(*args, **kwargs):
+    restore = tweakstyle(below=False, bg='white', gridcolor='white', grid=False)
+    if 'edgecolor' not in kwargs:
+        kwargs['edgecolor'] = 'white'
+    plt.hist(*args, **kwargs)
+    ax = plt.gca()
+    removespines(ax)
+    removeticks(ax)
+    setaxiscolors(ax)
+    ax.grid(axis='y', linestyle='-', linewidth=0.5)
+    restore()
+
 def wraparray(array, prefix=None, suffix=None):
     '''Returns an array with the string versions of the
     items of the given array wrapped by the given prefixes
@@ -363,8 +399,14 @@ def setstyle(**kwargs):
     And set some good colors by doing:
     setstyle(**{'axes.color_cycle':jkutils.plt_colors})
 
-    For boxplot, see the rbox function for a colorized boxplot.'''
-    import matplotlib as mpl
+    For boxplot, see the rbox function for a colorized boxplot.
+
+    Some very useful keyword arguments are:
+
+    bg == axes.facecolor
+    lw == axes.linewidth
+    below == axes.axisbelow
+    '''
     # Tex
     mpl.rcParams['text.usetex'] = True
     mpl.rcParams['text.latex.unicode'] = True
@@ -406,5 +448,46 @@ def setstyle(**kwargs):
     mpl.rcParams['savefig.dpi'] = 100
 
     # Set user specified stuff
+    tweakstyle(**kwargs)
+
+def tweakstyle(bg = None, lw = None, below = None, gridcolor=None, grid=None,
+               **kwargs):
+    '''Tweak a specific part of the plotting style, but don't overwrite
+     other changes.
+
+    Some very useful keyword arguments are:
+
+    bg == axes.facecolor
+    lw == axes.linewidth
+    below == axes.axisbelow
+    grid = axes.grid
+    gridcolor == grid.color
+    '''
+
+    oldvals = mpl.rcParams.copy()
+    def restore():
+        '''Restore to values before tweak.'''
+        for k, v in oldvals.items():
+            try:
+                mpl.rcParams[k] = v
+            except ValueError:
+                # Ignore possible bad values
+                pass
+
+    if bg is not None:
+        mpl.rcParams['axes.facecolor'] = bg
+    if lw is not None:
+        mpl.rcParams['axes.linewidth'] = lw
+    if below is not None:
+        mpl.rcParams['axes.axisbelow'] = below
+    if gridcolor is not None:
+        mpl.rcParams['grid.color'] = gridcolor
+    if grid is not None:
+        mpl.rcParams['axes.grid'] = grid
+
+    # The rest
     for k, v in kwargs.items():
         mpl.rcParams[k] = v
+
+    # Return restore function
+    return restore
