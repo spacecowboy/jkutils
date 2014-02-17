@@ -1,4 +1,5 @@
 import os
+from functools import wraps
 from scipy.stats import pearsonr
 from matplotlib.patches import Ellipse
 import matplotlib as mpl
@@ -46,6 +47,7 @@ def cleanaxis(ax=None):
     setaxiscolors(ax)
     setspinecolors(ax)
 
+@wraps(plt.hist)
 def hist(*args, **kwargs):
     restore = tweakstyle(below=False, bg='white', gridcolor='white', grid=False)
     if 'edgecolor' not in kwargs:
@@ -59,6 +61,7 @@ def hist(*args, **kwargs):
     ax.grid(axis='y', linestyle='-', linewidth=0.5)
     restore()
 
+@wraps(plt.plot)
 def plot(*args, **kwargs):
     restore = tweakstyle(below=True, bg='#fafafa', grid=True,
                          gridcolor='lightgrey')
@@ -360,6 +363,7 @@ def get_savefig(savedir, prefix='', filename=None):
         os.mkdir(savedir)
 
     # Define function which saves figures there
+    @wraps(plt.savefig)
     def savefig(*args, **kwargs):
         '''
         Use as plt.savefig. File extension will be ignored, and saved
