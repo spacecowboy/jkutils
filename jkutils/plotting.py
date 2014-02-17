@@ -341,7 +341,7 @@ def rbox(x, ax=None, **keywords):
         ax.add_patch(boxPolygon)
     return bp
 
-def get_savefig(savedir, prefix='', filename=None):
+def get_savefig(savedir, prefix=None, filename=None):
     '''
     Returns a function which saves the current matplotlib figure
     when called. Will set suitable values for bbox_inches.
@@ -391,7 +391,11 @@ def get_savefig(savedir, prefix='', filename=None):
             args = list(args)
             fname, ext = os.path.splitext(args.pop(0))
             #prefixing with path and prefix
-            fname = "_".join([prefix, fname])
+            if prefix is None:
+                fileprefix = ''
+            elif not prefix.endswith("_"):
+                fileprefix += "_"
+            fname = fileprefix + fname
             fname = os.path.join(savedir, fname)
 
         if fname is None:
