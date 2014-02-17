@@ -277,6 +277,70 @@ def rbox(x, ax=None, **keywords):
         ax.add_patch(boxPolygon)
     return bp
 
+def get_savefig(savedir, prefix='', filename=None):
+    '''
+    Returns a function which saves the current matplotlib figure
+    when called. Will set suitable values for bbox_inches.
+    Files are saved with eps and png extensions in the
+    designated directory and prefixed with the specified
+    prefix as "prefix_filename.extension"
+
+    DPI defaults to 300 to get high resolution png files.
+
+    Keyword arguments:
+    savedir - Folder in which to save figures
+
+    prefix - Optional prefix for files.
+
+    filename - Default filename to use if none is given
+    '''
+    # First make sure savedir exists
+    if not os.path.exists(savedir):
+        os.mkdir(savedir)
+
+    # Define function which saves figures there
+    def savefig(*args, **kwargs):
+        '''
+        Use as plt.savefig. File extension will be ignored, and saved
+        as eps and png.
+        Should only be given a raw file name, not an entire path.
+
+        Use as savefig(filename) or savefig() if a default filename
+        has been defined.
+
+        Accepts any arguments that plt.savefig accepts.
+        '''
+        # Make sure we use bbox_inches
+        if 'bbox_inches' not in kwargs:
+            kwargs['bbox_inches'] = 'tight'
+
+        # Make the images high resolution if not otherwise specified
+        if 'dpi' not in kwargs:
+            kwargs['dpi'] = 300
+
+        # Default filename
+        fname = filename
+        if args is None or len(args) == 0:
+            args = [] # Just make sure it's a list
+        else:
+            args = list(args)
+            fname, ext = os.path.splitext(args.pop(0))
+            #prefixing with path and prefix
+            fname = "_".join([prefix, fname])
+            fname = os.path.join(savedir, fname)
+
+        if fname is None:
+            raise ValueError("A filename must be specified!")
+
+        # Save png first as eps crashes on big images
+        plt.savefig(*([fname + '.png'] + args), **kwargs)
+        # Save pdf
+        plt.savefig(*([fname + '.pdf'] + args), **kwargs)
+        # Save eps
+        plt.savefig(*([fname + '.eps'] + args), **kwargs)
+
+    return savefig
+
 
 def setstyle(**kwargs):
     '''Sets a more reasonable style for matplotlib.
