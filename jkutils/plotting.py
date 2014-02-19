@@ -391,6 +391,7 @@ def get_savefig(savedir, prefix=None, filename=None):
             args = list(args)
             fname, ext = os.path.splitext(args.pop(0))
             #prefixing with path and prefix
+            fileprefix = ''
             if prefix is None:
                 fileprefix = ''
             elif not prefix.endswith("_"):
