@@ -72,6 +72,19 @@ def plot(*args, **kwargs):
     setaxiscolors(ax)
     restore()
 
+@wraps(plt.plot)
+def bar(*args, **kwargs):
+    restore = tweakstyle(bg='white')
+    plt.bar(*args, **kwargs)
+    ax = plt.gca()
+    ax.grid(axis='y', color='white', linestyle='-', linewidth=0.5)
+    removespines(ax)
+    ax.yaxis.set_ticks_position('left')
+    ax.xaxis.set_ticks_position('none')
+    setaxiscolors(ax)
+    setspinecolors(ax)
+    restore()
+
 def wraparray(array, prefix=None, suffix=None):
     '''Returns an array with the string versions of the
     items of the given array wrapped by the given prefixes
