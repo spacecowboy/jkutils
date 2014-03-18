@@ -223,17 +223,17 @@ def crossvalidate(net_constructor, data, inputcols, targetcols, ntimes=5,
 
             # Training result
             try:
-                predictions = np.array(net.output_all(data[trnindices][:, inputcols])).ravel()
+                predictions = np.array(net.output_all(data[trnindices][:, inputcols]))[:, 0]
             except:
-                predictions = np.array([net.output(x) for x in data[trnindices][:, inputcols]]).ravel()
+                predictions = np.array([net.output(x) for x in data[trnindices][:, inputcols]])[:, 0]
             c_index = get_C_index(data[trnindices][:, targetcols], predictions)
             trnresults.append(c_index)
 
             # Validation result
             try:
-                predictions = np.array(net.output_all(data[valindices][:, inputcols])).ravel()
+                predictions = np.array(net.output_all(data[valindices][:, inputcols]))[:, 0]
             except:
-                predictions = np.array([net.output(x) for x in data[valindices][:, inputcols]]).ravel()
+                predictions = np.array([net.output(x) for x in data[valindices][:, inputcols]])[:, 0]
             c_index = get_C_index(data[valindices][:, targetcols], predictions)
             valresults.append(c_index)
 
