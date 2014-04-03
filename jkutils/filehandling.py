@@ -1,9 +1,14 @@
 import numpy as np
-import re
-import os, errno
-from os import path
+import os
+import errno
 from random import random, sample
 import csv
+
+
+# Different modes of imputation
+IMPUTE_SAMPLE = "sample"
+IMPUTE_AVERAGE = "average"
+
 
 def mkdir_p(path):
     """Like mkdir -p it creates all directories
@@ -16,6 +21,7 @@ def mkdir_p(path):
         else:
             raise
 
+
 def parse_header(headers):
     """
     In Python3, this method could be done in one line:
@@ -27,7 +33,8 @@ def parse_header(headers):
 
     return header_names
 
-def read_data_file(filename, separator = ','):
+
+def read_data_file(filename, separator=','):
     """Columns are data dimensions, rows are sample data.
     Whitespace separates the columns. Returns a python list [[]].
     """
@@ -42,41 +49,71 @@ def read_data_file(filename, separator = ','):
         assert(len(line) == col_len)
     return inputs
 
-def parse_file(filename, inputcols = None, ignorecols = [], ignorerows = [],
-               normalize = True, separator = None, use_header = False,
-               fill_average = True):
-    return parse_data(np.array(read_data_file(filename, separator = separator)),
+
+def parse_file(filename, inputcols=None, ignorecols=[], ignorerows=[],
+               normalize=True, separator=None, use_header=False,
+               impute=None):
+    """Parse a csv-file and return it as a numpy array. Supports sparse data.
+    See also read_data_file and parse_data.
+
+    Arguments:
+    filename - The path to the file to parse
+    separator - What deliminator to use to parse the file (default ',')
+    inputcols - is either an int describing which column to parse or it's
+                a list of several ints. Not necessary if ignorecols are used.
+    ignorecols - can be used instead if it's easier to specify which columns
+                 to ignore instead of which to include.
+    ignorerows - specify which, if any, rows should be skipped.
+    use_header - if True, the first line is taken to be the header containing
+                 column names. This will be parsed and inputcols/ignorecols
+                 must now specify the columns with names instead of ints.
+                 The first line (the header) is subsequently ignored from
+                 the dataset so this doesn't have to be specified seperately.
+    normalize - if the final data should be normalized before returned.
+    impute - How to fill missing values: None, IMPUTE_SAMPLE or IMPUTE_AVERAGE
+
+    Returns a 2-dimensional numpy array of type float64.
+    """
+    return parse_data(np.array(read_data_file(filename, separator=separator)),
                       inputcols, ignorecols, ignorerows, normalize, use_header,
-                      fill_average)
+                      impute)
 
-def parse_data(inputs, inputcols = None, ignorecols = [], ignorerows = [],
-               normalize = True, use_header = False, fill_average = True):
-    """inputs is an array of data columns. targetcols is either an int
-    describing which column is a the targets or it's a list of several ints
-    pointing to multiple target columns.
-    Input columns follows the same pattern, but are not necessary if the inputs
-    are all that's left when target columns are subtracted.
-    Ignorecols can be used instead if it's easier to specify which columns to
-    ignore instead of which are inputs.
-    Ignorerows specify which, if any, rows should be skipped.
 
-    if useHeader is True, the first line is taken to be the header containing
-    column names. This will be parsed and inputcols and targetcols must now
-    specify the columns with names instead.
-    The first line (the header) is subsequently ignored from the dataset so this
-    doesn't have to be specified seperately.
+def parse_data(inputs, inputcols=None, ignorecols=[], ignorerows=[],
+               normalize=True, use_header=False, impute=None):
+    """Parse a numpy array of strings. Supports sparse data.
+
+    Arguments:
+    inputs - an array of data columns.
+    inputcols - is either an int describing which column to parse or it's
+                a list of several ints. Not necessary if ignorecols are used.
+    ignorecols - can be used instead if it's easier to specify which columns
+                 to ignore instead of which to include.
+    ignorerows - specify which, if any, rows should be skipped.
+    use_header - if True, the first line is taken to be the header containing
+                 column names. This will be parsed and inputcols/ignorecols
+                 must now specify the columns with names instead of ints.
+                 The first line (the header) is subsequently ignored from
+                 the dataset so this doesn't have to be specified seperately.
+    normalize - if the final data should be normalized before returned.
+    impute - How to fill missing values: None, IMPUTE_SAMPLE or IMPUTE_AVERAGE
+
+    Returns a 2-dimensional numpy array of type float64.
     """
 
     if use_header:
-        #Parse the header line, get a hash where the keys are the names and the values are the column numbers.
+        #Parse the header line, get a hash where the keys are the
+        #names and the values are the column numbers.
         col_names = parse_header(inputs[0])
         #If not present in ignore list, add it
         if 0 not in ignorerows:
             ignorerows.append(0)
-        #Also verify that the names specified are indeed valid column names, otherwise throw an exception about it.
+        #Also verify that the names specified are indeed valid column
+        #names, otherwise throw an exception about it.
         for name in inputcols:
             if name not in col_names:
-                raise ValueError(str(name) + ' is not a column name ({})'.format(col_names))
+                raise ValueError('{} is not in columns ({})'.format(name,
+                                                                    col_names))
 
         #Now use a translated array from names to numbers. Carry on as before
         named_inputcols = inputcols
@@ -93,45 +130,44 @@ it is probably not a numpy array: ' + str(inputs))
         inputcols = list(range(len(inputs[0])))
         destroycols = []
         try:
-            destroycols.append(int(targetcols)) #Only if it's an int
-        except TypeError:
-            destroycols.extend(targetcols)
-        try:
-            destroycols.append(int(ignorecols)) #Only if it's an int
+            #Only if it's an int
+            destroycols.append(int(ignorecols))
         except TypeError:
             destroycols.extend(ignorecols)
 
         inputcols = np.delete(inputcols, destroycols, 0)
 
-    if fill_average:
+    if impute == IMPUTE_AVERAGE:
         replace_empty_with_avg(inputs, inputcols)
+    elif impute == IMPUTE_SAMPLE:
+        replace_empty_with_sample(inputs, inputcols)
 
     for line in range(len(inputs)):
         keep_only_numbers(line, inputcols, ignorerows)
 
     inputs = np.delete(inputs, ignorerows, 0)
 
-    inputs = np.array(inputs[:, inputcols], dtype = 'float64')
+    inputs = np.array(inputs[:, inputcols], dtype='float64')
 
     if normalize:
         inputs = normalizeArray(inputs)
 
-    #Now divide the input into test and validation parts
-
     return inputs
 
+
 def keep_only_numbers(line, all_cols, ignorerows):
-    for col in all_cols: #check only valid columns
+    for col in all_cols:  # check only valid columns
         try:
             float(col)
-        except ValueError: #This row contains crap, get rid of it
+        except ValueError:  # This row contains crap, get rid of it
             ignorerows.append(line)
-            break #skip to next line
+            break  # skip to next line
+
 
 def replace_empty_with_avg(inputs, inputcols):
     for col in inputcols:
         binary = False
-        valid_inputs = np.array([], dtype = 'float64')
+        valid_inputs = np.array([], dtype='float64')
         for val in inputs[:, col]:
             try:
                 if float(val) != 0 and float(val) != 1:
@@ -151,25 +187,36 @@ def replace_empty_with_avg(inputs, inputcols):
                     inputs[i, col] = avg_val
 
 
-def replace_empty_with_random(inputs, inputcols):
+def replace_empty_with_sample(inputs, inputcols):
+    # Deal with each column separately
     for col in inputcols:
-        valid_inputs = np.array([], dtype = 'float64')
-        for val in inputs[:, col]:
+        # First we must find which rows have valid values
+        valid_rows = []
+        missing_rows = []
+        for i, val in enumerate(inputs[:, col]):
             try:
-                valid_inputs = np.append(valid_inputs, float(val))
+                float(val)
+                valid_rows.append(i)
             except ValueError:
-                pass
-        for i in range(len(inputs)):
-            try:
-                float(inputs[i, col])
-            except ValueError:
-                #Sample returns a list, access first and only element
-                inputs[i, col] = sample(valid_inputs, 1)[0]
+                missing_rows.append(i)
+
+        # Get which indices in valid_rows to use as sample
+        # This random function is inclusive!
+        sample_i = np.random.random_integers(0,
+                                             len(valid_rows) - 1,
+                                             len(missing_rows))
+        # Actual sample is then just
+        sample = np.array(valid_rows)[sample_i]
+
+        # Now replace missing values with sample
+        inputs[missing_rows, col] = inputs[sample, col]
+
 
 def normalizeArray(array):
     '''Returns a new array, will not modify existing array.
     Normalization is simply subtracting the mean and dividing by the
-    standard deviation (for non-binary arrays).'''
+    standard deviation (for non-binary arrays).
+    Binary columns are NOT normalized.'''
 
     inputs = np.copy(array)
     #First we must determine which columns have real values in them
@@ -179,12 +226,13 @@ def normalizeArray(array):
         for value in inputs[:, col]:
             if value != 0 and value != 1:
                 real = True
-                break #No point in continuing now that we know they're real
+                break  # No point in continuing now that we know they're real
         if real:
             #Subtract the mean and divide by the standard deviation
             inputs[:, col] = (inputs[:, col] - np.mean(inputs[:, col])) / np.std(inputs[:, col])
 
     return inputs
+
 
 def normalizeArrayLike(test_array, norm_array):
     ''' Takes two arrays, the first is the test set you wish to have
@@ -244,8 +292,9 @@ def print_output(outfile, net, filename, targetcols, inputcols, ignorerows, norm
     with open(outfile, 'w') as f:
         f.writelines(lines)
 
-def get_validation_set(inputs, targets, validation_size = 0.2,
-                       binary_column = None):
+
+def get_validation_set(inputs, targets, validation_size=0.2,
+                       binary_column=None):
     '''
     Use binary column to specify a column of the targets which is binary,
     and can be used for
@@ -291,10 +340,10 @@ def get_validation_set(inputs, targets, validation_size = 0.2,
                 validation_inputs.append(inputs_ones[row])
                 validation_targets.append(targets_ones[row])
 
-    test_inputs = np.array(test_inputs, dtype = 'float64')
-    test_targets = np.array(test_targets, dtype = 'float64')
-    validation_inputs = np.array(validation_inputs, dtype = 'float64')
-    validation_targets = np.array(validation_targets, dtype = 'float64')
+    test_inputs = np.array(test_inputs, dtype='float64')
+    test_targets = np.array(test_targets, dtype='float64')
+    validation_inputs = np.array(validation_inputs, dtype='float64')
+    validation_targets = np.array(validation_targets, dtype='float64')
 
     #shuffle the lists
     #BIG FUCKING ERROR HERE. NOTICE HOW YOU SHUFFLE INPUT AND TARGETS DIFFERENTLY? YOU FUCKING IDIOT !
@@ -305,7 +354,8 @@ def get_validation_set(inputs, targets, validation_size = 0.2,
 
     return ((test_inputs, test_targets), (validation_inputs, validation_targets))
 
-def get_cross_validation_sets(inputs, targets, pieces, binary_column = None, return_indices = False):
+
+def get_cross_validation_sets(inputs, targets, pieces, binary_column=None, return_indices=False):
     '''
     pieces is the number of validation sets that the data set should be divided into.
     '''
