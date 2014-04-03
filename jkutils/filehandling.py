@@ -194,11 +194,15 @@ def replace_empty_with_sample(inputs, inputcols):
         valid_rows = []
         missing_rows = []
         for i, val in enumerate(inputs[:, col]):
-            try:
-                float(val)
-                valid_rows.append(i)
-            except ValueError:
+            if val is None or np.isnan(val):
                 missing_rows.append(i)
+            else:
+                valid_rows.append(i)
+
+        if len(valid_rows) == 0:
+            # Can't sample nothing. Ignore this column.
+            print("No valid values found. Ignoring col: " + col)
+            continue
 
         # Get which indices in valid_rows to use as sample
         # This random function is inclusive!
