@@ -61,6 +61,42 @@ def hist(*args, **kwargs):
     ax.grid(axis='y', linestyle='-', linewidth=0.5)
     restore()
 
+@wraps(plt.semilogx)
+def semilogx(*args, **kwargs):
+    restore = tweakstyle(below=True, bg='#fafafa', grid=True,
+                         gridcolor='lightgrey')
+    plt.semilogx(*args, **kwargs)
+    ax = plt.gca()
+    removespines(ax)
+    removeticks(ax)
+    setaxiscolors(ax)
+    restore()
+
+
+@wraps(plt.semilogy)
+def semilogy(*args, **kwargs):
+    restore = tweakstyle(below=True, bg='#fafafa', grid=True,
+                         gridcolor='lightgrey')
+    plt.semilogy(*args, **kwargs)
+    ax = plt.gca()
+    removespines(ax)
+    removeticks(ax)
+    setaxiscolors(ax)
+    restore()
+
+
+@wraps(plt.loglog)
+def loglog(*args, **kwargs):
+    restore = tweakstyle(below=True, bg='#fafafa', grid=True,
+                         gridcolor='lightgrey')
+    plt.loglog(*args, **kwargs)
+    ax = plt.gca()
+    removespines(ax)
+    removeticks(ax)
+    setaxiscolors(ax)
+    restore()
+
+
 @wraps(plt.plot)
 def plot(*args, **kwargs):
     restore = tweakstyle(below=True, bg='#fafafa', grid=True,
