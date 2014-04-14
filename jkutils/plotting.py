@@ -332,6 +332,9 @@ def rbox(x, ax=None, **keywords):
     names -- array-like collection of box names which are passed on as tick labels
 
     """
+    restore = tweakstyle(below=True, bg='#fafafa', grid=True,
+                         gridcolor='lightgrey')
+
     if ax is None:
         ax = plt.gca()
 
@@ -397,6 +400,12 @@ def rbox(x, ax=None, **keywords):
             boxPolygon = plt.Polygon(boxCoords, facecolor = '0.95')
 
         ax.add_patch(boxPolygon)
+
+    removespines(ax)
+    removeticks(ax)
+    setaxiscolors(ax)
+    restore()
+
     return bp
 
 def get_savefig(savedir, prefix=None, filename=None):

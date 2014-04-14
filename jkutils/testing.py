@@ -284,7 +284,7 @@ def plot_comparison(paramchoices, results, savefig=None, figname=None,
 
     #plt.ylim((0.5, 1.0))
     ax = plt.gca()
-    ax.set_ylabel('c-index')
+    ax.set_ylabel('Error')
     if xlabel:
         ax.set_xlabel(xlabel)
     # Nice x-axis values
