@@ -7,9 +7,10 @@ scenarios.
 
 from __future__ import division, print_function
 import numpy as np
-import matplotlib.pyplot as plt
 import os
-from ann import get_C_index
+import ann
+#from ann import get_C_index
+from jkutils import plotting as plt
 
 def test_parameter_values(net_constructor, data, inputcols, targetcols,
                            name, values, ntimes=10):
@@ -55,8 +56,11 @@ def test_parameter_values(net_constructor, data, inputcols, targetcols,
         #Train n times for each value
         for x in range(ntimes):
             net.learn(data[:, inputcols], data[:, targetcols])
-            predictions = np.array([net.output(x) for x in data[:, inputcols]]).ravel()
-            results[value].append(get_C_index(data[:, targetcols], predictions))
+            predictions = np.array([net.output(x) for x in data[:, inputcols]])
+            results[value].append(np.mean(ann.get_error(net.error_function,
+                                                data[:, targetcols],
+                                                predictions)))
+            #results[value].append(get_C_index(data[:, targetcols], predictions))
 
     return results
 
@@ -226,16 +230,25 @@ def crossvalidate(net_constructor, data, inputcols, targetcols, ntimes=5,
                 predictions = np.array(net.output_all(data[trnindices][:, inputcols]))[:, 0]
             except:
                 predictions = np.array([net.output(x) for x in data[trnindices][:, inputcols]])[:, 0]
-            c_index = get_C_index(data[trnindices][:, targetcols], predictions)
-            trnresults.append(c_index)
+
+            err = np.mean(ann.get_error(net.error_function,
+                                    data[trnindices, targetcols],
+                                    predictions))
+            #c_index = get_C_index(data[trnindices][:, targetcols], predictions)
+            trnresults.append(err)
 
             # Validation result
             try:
                 predictions = np.array(net.output_all(data[valindices][:, inputcols]))[:, 0]
             except:
                 predictions = np.array([net.output(x) for x in data[valindices][:, inputcols]])[:, 0]
-            c_index = get_C_index(data[valindices][:, targetcols], predictions)
-            valresults.append(c_index)
+
+            err = np.mean(ann.get_error(net.error_function,
+                                    data[valindices, targetcols],
+                                    predictions))
+
+            #c_index = get_C_index(data[valindices][:, targetcols], predictions)
+            valresults.append(err)
 
             if evalfunc is not None and evalresults is not None:
                 evalfunc(net, data, inputcols, targetcols,
