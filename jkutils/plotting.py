@@ -314,6 +314,15 @@ def rhist(data, ax=None, **keywords):
 
     return ax.hist(data, **keywords)
 
+def boxplot(x, ax=None, **keywords):
+    """Creates a ggplot2 style boxplot, is eqivalent to calling ax.boxplot with the following additions:
+
+    Keyword arguments:
+    colors -- array-like collection of colours for box fills
+    names -- array-like collection of box names which are passed on as tick labels
+
+    """
+    return rbox(x, ax, **keywords)
 
 def rbox(x, ax=None, **keywords):
     """Creates a ggplot2 style boxplot, is eqivalent to calling ax.boxplot with the following additions:
@@ -380,7 +389,7 @@ def rbox(x, ax=None, **keywords):
         for j in range(5):
           boxX.append(box.get_xdata()[j])
           boxY.append(box.get_ydata()[j])
-        boxCoords = zip(boxX,boxY)
+        boxCoords = list(zip(boxX,boxY))
 
         if hasColors:
             boxPolygon = plt.Polygon(boxCoords, facecolor = colors[i % len(colors)])
