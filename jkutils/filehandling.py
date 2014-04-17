@@ -72,7 +72,8 @@ def parse_file(filename, inputcols=None, ignorecols=[], ignorerows=[],
     normalize - if the final data should be normalized before returned.
     impute - How to fill missing values: None, IMPUTE_SAMPLE or IMPUTE_AVERAGE
 
-    Returns a 2-dimensional numpy array of type float64.
+    Returns a 2-dimensional numpy array of type float64 if possible, else
+    same as you passed in.
     """
     return parse_data(np.array(read_data_file(filename, separator=separator)),
                       inputcols, ignorecols, ignorerows, normalize, use_header,
@@ -98,7 +99,8 @@ def parse_data(inputs, inputcols=None, ignorecols=[], ignorerows=[],
     normalize - if the final data should be normalized before returned.
     impute - How to fill missing values: None, IMPUTE_SAMPLE or IMPUTE_AVERAGE
 
-    Returns a 2-dimensional numpy array of type float64.
+    Returns a 2-dimensional numpy array of type float64 if possible, else same
+    as you passed in.
     """
 
     if use_header:
@@ -147,10 +149,14 @@ it is probably not a numpy array: ' + str(inputs))
 
     inputs = np.delete(inputs, ignorerows, 0)
 
-    inputs = np.array(inputs[:, inputcols], dtype='float64')
+    try:
+        inputs = np.array(inputs[:, inputcols], dtype='float64')
 
-    if normalize:
-        inputs = normalizeArray(inputs)
+        if normalize:
+            inputs = normalizeArray(inputs)
+    except ValueError:
+        # Dont' convert
+        pass
 
     return inputs
 
@@ -194,10 +200,20 @@ def replace_empty_with_sample(inputs, inputcols):
         valid_rows = []
         missing_rows = []
         for i, val in enumerate(inputs[:, col]):
-            if val is None or np.isnan(val):
-                missing_rows.append(i)
-            else:
-                valid_rows.append(i)
+            try:
+                if val is None or np.isnan(val):
+                    missing_rows.append(i)
+                else:
+                    valid_rows.append(i)
+            except TypeError as e:
+                # This happens if a String is passed to isnan
+                try:
+                    if len(val) > 0:
+                        valid_rows.append(i)
+                    else:
+                        missing_rows.append(i)
+                except:
+                    missing_rows.append(i)
 
         if len(valid_rows) == 0:
             # Can't sample nothing. Ignore this column.
