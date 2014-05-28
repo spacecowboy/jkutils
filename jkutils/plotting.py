@@ -121,6 +121,24 @@ def bar(*args, **kwargs):
     setspinecolors(ax)
     restore()
 
+@wraps(plt.scatter)
+def scatter(*args, **kwargs):
+    kwargs['alpha'] = kwargs.get('alpha', 0.5)
+    kwargs['facecolor'] = kwargs.get('facecolor', _set2[0])
+    kwargs['edgecolor'] = kwargs.get('edgecolor', 'black')
+    kwargs['linewidths'] = kwargs.get('linewidths', 0.3)
+
+    restore = tweakstyle(below=True, bg='#fafafa', grid=True,
+                         gridcolor='lightgrey')
+
+    plt.scatter(*args, **kwargs)
+    ax = plt.gca()
+    removespines(ax, ["top", "right", "left", "bottom"])
+    removeticks(ax)
+    setaxiscolors(ax)
+    restore()
+
+
 def wraparray(array, prefix=None, suffix=None):
     '''Returns an array with the string versions of the
     items of the given array wrapped by the given prefixes
