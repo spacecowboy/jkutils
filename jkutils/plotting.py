@@ -408,7 +408,7 @@ def rbox(x, ax=None, **keywords):
 
     return bp
 
-def get_savefig(savedir, prefix=None, filename=None):
+def get_savefig(savedir, prefix=None, filename=None, extensions=None):
     '''
     Returns a function which saves the current matplotlib figure
     when called. Will set suitable values for bbox_inches.
@@ -424,6 +424,9 @@ def get_savefig(savedir, prefix=None, filename=None):
     prefix - Optional prefix for files.
 
     filename - Default filename to use if none is given
+
+    extensions - An iterable of file-extensions. If None,
+                 defaults to [pdf, png, eps]
     '''
     # First make sure savedir exists
     if not os.path.exists(savedir):
@@ -469,12 +472,12 @@ def get_savefig(savedir, prefix=None, filename=None):
         if fname is None:
             raise ValueError("A filename must be specified!")
 
-        # Save png first as eps crashes on big images
-        plt.savefig(*([fname + '.png'] + args), **kwargs)
-        # Save pdf
-        plt.savefig(*([fname + '.pdf'] + args), **kwargs)
-        # Save eps
-        plt.savefig(*([fname + '.eps'] + args), **kwargs)
+        if extensions is None:
+            # Save pdf, png first as eps crashes on big images
+            extensions = ['pdf', 'png', 'eps']
+
+        for ext in extensions:
+            plt.savefig(*([fname + '.' + ext] + args), **kwargs)
 
     return savefig
 
