@@ -442,6 +442,9 @@ def get_savefig(savedir, prefix=None, filename=None, extensions=None):
     prefix - Optional prefix for files.
 
     filename - Default filename to use if none is given
+
+    extensions - An iterable of file-extensions. If None,
+                 defaults to [pdf, png, eps]
     '''
     # First make sure savedir exists
     if not os.path.exists(savedir):
@@ -487,15 +490,12 @@ def get_savefig(savedir, prefix=None, filename=None, extensions=None):
         if fname is None:
             raise ValueError("A filename must be specified!")
 
-        # Save png first as eps crashes on big images
-        if extensions is None or "png" in extensions:
-            plt.savefig(*([fname + '.png'] + args), **kwargs)
-        # Save pdf
-        if extensions is None or "pdf" in extensions:
-            plt.savefig(*([fname + '.pdf'] + args), **kwargs)
-        # Save eps
-        if extensions is None or "eps" in extensions:
-            plt.savefig(*([fname + '.eps'] + args), **kwargs)
+        if extensions is None:
+            # Save pdf, png first as eps crashes on big images
+            extensions = ['pdf', 'png', 'eps']
+
+        for ext in extensions:
+            plt.savefig(*([fname + '.' + ext] + args), **kwargs)
 
     return savefig
 
