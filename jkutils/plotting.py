@@ -450,6 +450,10 @@ def get_savefig(savedir, prefix=None, filename=None, extensions=None):
     if not os.path.exists(savedir):
         os.mkdir(savedir)
 
+    if extensions is None:
+        # Save pdf, png first as eps crashes on big images
+        extensions = ['pdf', 'png', 'eps']
+
     # Define function which saves figures there
     @wraps(plt.savefig)
     def savefig(*args, **kwargs):
@@ -489,10 +493,6 @@ def get_savefig(savedir, prefix=None, filename=None, extensions=None):
 
         if fname is None:
             raise ValueError("A filename must be specified!")
-
-        if extensions is None:
-            # Save pdf, png first as eps crashes on big images
-            extensions = ['pdf', 'png', 'eps']
 
         for ext in extensions:
             plt.savefig(*([fname + '.' + ext] + args), **kwargs)
