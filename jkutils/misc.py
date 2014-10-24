@@ -20,6 +20,7 @@ def normalize_panda(dataframe, cols):
     for col in cols:
         # Check if binary
         uniques = np.unique(dataframe[col])
+
         if len(uniques) == 2:
             # Binary, force into 0 and 1
             mins = dataframe[col] == np.min(uniques)
@@ -28,12 +29,19 @@ def normalize_panda(dataframe, cols):
             dataframe[col][mins] = 0
             dataframe[col][maxs] = 1
         else:
+            # Can still be "binary"
+            if len(uniques) == 1 and (uniques[0] == 0 or uniques[0] == 1):
+                # Yes, single binary value
+                continue
+
             # Continuous, zero mean with 1 standard deviation
             mean = dataframe[col].mean()
             std = dataframe[col].std()
 
             dataframe[col] -= mean
-            dataframe[col] /= std
+            # Can be single value
+            if std > 0:
+                dataframe[col] /= std
 
 
 def normalize_numpy(array, cols):
@@ -57,12 +65,19 @@ def normalize_numpy(array, cols):
             array[mins, col] = 0
             array[maxs, col] = 1
         else:
+            # Can still be "binary"
+            if len(uniques) == 1 and (uniques[0] == 0 or uniques[0] == 1):
+                # Yes, single binary value
+                continue
+
             # Continuous, zero mean with 1 standard deviation
             mean = array[col].mean()
             std = array[col].std()
 
             array[col] -= mean
-            array[col] /= std
+            # Can be single value
+            if std > 0:
+                array[col] /= std
 
 
 def sample_wr(population, k):
