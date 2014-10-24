@@ -373,6 +373,9 @@ def rbox(x, ax=None, **keywords):
         ax.tickNames = plt.setp(ax, xticklabels=keywords['names'] )
         keywords.pop('names')
 
+    # For bug in Matplotlib 1.4, not respecting flierprops
+    keywords['sym'] = 'ko'
+
     bp = ax.boxplot(x, **keywords)
     plt.setp(bp['boxes'], color='black')
     plt.setp(bp['whiskers'], color='black', linestyle = 'solid')
@@ -401,6 +404,7 @@ def rbox(x, ax=None, **keywords):
         x = [x]
 
     numBoxes = len(x)
+    boxpolygons = []
     for i in range(numBoxes):
         box = bp['boxes'][i]
         boxX = []
@@ -418,12 +422,14 @@ def rbox(x, ax=None, **keywords):
             boxPolygon = plt.Polygon(boxCoords, facecolor = '0.95')
 
         ax.add_patch(boxPolygon)
+        boxpolygons.append(boxPolygon)
 
     removespines(ax)
     removeticks(ax)
     setaxiscolors(ax)
     restore()
 
+    bp['boxpolygons'] = boxpolygons
     return bp
 
 def get_savefig(savedir, prefix=None, filename=None, extensions=None):
