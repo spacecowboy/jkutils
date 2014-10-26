@@ -5,6 +5,51 @@ by __init__.py to package level.
 
 from __future__ import division
 import numpy as np
+import pandas as pd
+
+
+def split_pandas_class_columns(df, upper_lim=5, lower_lim=3, int_only=True):
+    '''
+    Splits columns of a dataframe where rows can only take a limited
+    amount of valid values, into seperate columns
+    for each observed value. The result is a number of columns which are
+    exclusive with each other: only one can be 1 at any time.
+
+    Parameters:
+    - df, pandas dataframe to work with
+    - upper_lim, only consider columns with less unique values (default 5)
+    - lower_lim, only consider equal or more unique values (default 3)
+    - int_only, if True only include columns with all integers
+
+    Returns:
+    A new pandas dataframe with the same columns as df, except those columns
+    which have been split.
+
+    Note: This function preserves NaNs.
+    '''
+    ndf = pd.DataFrame()
+    for col in df.columns:
+        uniques = np.unique(df[col])
+        # Dont count nans as unique values
+        nans = np.isnan(uniques)
+        uniques = uniques[~nans]
+        # If class variable
+        if ((len(uniques) >= lower_lim and len(uniques) < upper_lim) and
+            (not int_only or np.all(uniques.astype(int) == uniques))):
+            # Split it, one col for each unique value
+            for val in uniques:
+                # A human-readable name
+                ncol = "{}{}".format(col, val)
+                # Set values
+                ndf[ncol] = np.zeros_like(df[col])
+                ndf[ncol][df[col] == val] = 1
+                # Also transfer NaNs
+                ndf[ncol][df[col].isnull()] = np.nan
+        else:
+            # Not a class variable
+            ndf[col] = df[col]
+
+    return ndf
 
 
 def normalize_panda(dataframe, cols):
