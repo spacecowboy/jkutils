@@ -61,6 +61,8 @@ def normalize_panda(dataframe, cols):
     Parameters:
     - dataframe, the pandas dataframe to normalize column-wise
     - cols, (iterable) the column names in the dataframe to normalize.
+
+    Note: this function preserves NaNs.
     '''
     for col in cols:
         # Check if binary
