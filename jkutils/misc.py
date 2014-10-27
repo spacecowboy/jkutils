@@ -52,12 +52,12 @@ def split_dataframe_class_columns(df, upper_lim=5, lower_lim=3, int_only=True):
     return ndf
 
 
-def replace_dataframe_nans(df):
+def replace_dataframe_nans(df, binary_median=False):
     '''
     Replaces the NaNs of a pandas dataframe with
     the mean of the column, in case of continuous
-    values. If the column is binary, it will be replaced
-    with the median value.
+    values. If the column is binary, it can be replaced
+    with the median value if desired.
 
     Parameters:
     - df, the dataframe to replace NaNs in
@@ -69,7 +69,7 @@ def replace_dataframe_nans(df):
         uniques = uniques[~nans]
 
         nans = np.isnan(df[col])
-        if len(uniques) == 2:
+        if binary_median and len(uniques) == 2:
             # Binary, use median
             df[col][nans] = df[col].median()
         else:
@@ -77,20 +77,23 @@ def replace_dataframe_nans(df):
             df[col][nans] = df[col].mean()
 
 
-def normalize_dataframe(dataframe, cols=None):
+def normalize_dataframe(dataframe, cols=None, binvals=None):
     '''
     Normalize a pandas dataframe. Binary values are
-    forced to 0-1, and continuous (the rest) variables
+    forced to (-1,1), and continuous (the rest) variables
     are forced to zero mean and standard deviation = 1
 
     Parameters:
     - dataframe, the pandas dataframe to normalize column-wise
     - cols, (optional iterable) the column names in the dataframe to normalize.
+    - binvals, (default (0,1)) tuple giving the (min,max) binary values to use.
 
     Note: this function preserves NaNs.
     '''
     if cols is None:
         cols = dataframe.columns
+    if binvals is None:
+        binvals = (-1, 1)
 
     for col in cols:
         # Check if binary
@@ -101,8 +104,8 @@ def normalize_dataframe(dataframe, cols=None):
             mins = dataframe[col] == np.min(uniques)
             maxs = dataframe[col] == np.max(uniques)
 
-            dataframe[col][mins] = 0
-            dataframe[col][maxs] = 1
+            dataframe[col][mins] = binvals[0]
+            dataframe[col][maxs] = binvals[1]
         else:
             # Can still be "binary"
             if len(uniques) == 1 and (uniques[0] == 0 or uniques[0] == 1):
