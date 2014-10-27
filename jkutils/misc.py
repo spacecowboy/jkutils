@@ -8,7 +8,7 @@ import numpy as np
 import pandas as pd
 
 
-def split_pandas_class_columns(df, upper_lim=5, lower_lim=3, int_only=True):
+def split_dataframe_class_columns(df, upper_lim=5, lower_lim=3, int_only=True):
     '''
     Splits columns of a dataframe where rows can only take a limited
     amount of valid values, into seperate columns
@@ -52,7 +52,32 @@ def split_pandas_class_columns(df, upper_lim=5, lower_lim=3, int_only=True):
     return ndf
 
 
-def normalize_panda(dataframe, cols):
+def replace_dataframe_nans(df):
+    '''
+    Replaces the NaNs of a pandas dataframe with
+    the mean of the column, in case of continuous
+    values. If the column is binary, it will be replaced
+    with the median value.
+
+    Parameters:
+    - df, the dataframe to replace NaNs in
+    '''
+    for col in df.columns:
+        uniques = np.unique(df[col])
+        # Dont count nans as unique values
+        nans = np.isnan(uniques)
+        uniques = uniques[~nans]
+
+        nans = np.isnan(df[col])
+        if len(uniques) == 2:
+            # Binary, use median
+            df[col][nans] = df[col].median()
+        else:
+            # Use mean
+            df[col][nans] = df[col].mean()
+
+
+def normalize_dataframe(dataframe, cols=None):
     '''
     Normalize a pandas dataframe. Binary values are
     forced to 0-1, and continuous (the rest) variables
@@ -60,10 +85,13 @@ def normalize_panda(dataframe, cols):
 
     Parameters:
     - dataframe, the pandas dataframe to normalize column-wise
-    - cols, (iterable) the column names in the dataframe to normalize.
+    - cols, (optional iterable) the column names in the dataframe to normalize.
 
     Note: this function preserves NaNs.
     '''
+    if cols is None:
+        cols = dataframe.columns
+
     for col in cols:
         # Check if binary
         uniques = np.unique(dataframe[col])
@@ -91,7 +119,7 @@ def normalize_panda(dataframe, cols):
                 dataframe[col] /= std
 
 
-def normalize_numpy(array, cols):
+def normalize_array(array, cols):
     '''
     Normalize a numpy array. Binary values are
     forced to 0-1, and continuous (the rest) variables
