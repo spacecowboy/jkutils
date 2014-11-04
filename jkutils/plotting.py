@@ -397,7 +397,7 @@ def rbox(x, ax=None, **keywords):
             elif nc == 1:
                 x = [x.ravel()]
             else:
-                x = [x[:,i] for i in xrange(nc)]
+                x = [x[:,i] for i in range(nc)]
         else:
             raise ValueError("input x can have no more than 2 dimensions")
     if not hasattr(x[0], '__len__'):
